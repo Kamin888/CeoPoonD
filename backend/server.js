@@ -31,6 +31,7 @@ const dummyPasswordHash = bcrypt.hashSync("invalid-password", 12);
 app.use(cors({ origin: frontendOrigin, credentials: true }));
 app.use(cookieParser());
 app.use("/api/listings", express.json({ limit: "12mb" }));
+app.use("/api/admin/listings", express.json({ limit: "12mb" }));
 app.use(express.json({ limit: "10kb" }));
 
 const authRateLimit = rateLimit({
