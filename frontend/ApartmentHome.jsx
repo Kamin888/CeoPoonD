@@ -844,13 +844,6 @@ export default function ApartmentHome() {
                     <tbody>
                       {pendingReviews.map((listing) => {
                         const details = listing.details || {};
-                        const location = [
-                          details.subdistrict && `แขวง/ตำบล ${details.subdistrict}`,
-                          details.district && `เขต/อำเภอ ${details.district}`,
-                          details.province,
-                          details.road && `ถนน/ซอย ${details.road}`,
-                          details.nearby && `ใกล้ ${details.nearby}`,
-                        ].filter(Boolean).join(" · ");
                         return (
                           <tr key={listing.id}>
                             <th scope="row">
@@ -861,12 +854,13 @@ export default function ApartmentHome() {
                                   <div className="admin-table-placeholder">ไม่มีรูป</div>
                                 )}
                                 <div className="admin-table-details">
-                                  <div className="admin-table-name">{listing.name}</div>
-                                  <div className="admin-table-timestamp">{location || listing.area || "ไม่ได้ระบุทำเล"}</div>
+                                  <button
+                                    className="admin-table-name-button"
+                                    type="button"
+                                    aria-haspopup="dialog"
+                                    onClick={() => setPendingReviewListing(listing)}
+                                  >{listing.name}</button>
                                   <div className="admin-table-timestamp">ผู้โพสต์: {listing.owner_email || "บัญชีผู้ใช้เดิม"}</div>
-                                  <button className="admin-review-details-button" type="button" onClick={() => setPendingReviewListing(listing)}>
-                                    ดูรายละเอียด
-                                  </button>
                                 </div>
                               </div>
                             </th>
@@ -984,7 +978,12 @@ export default function ApartmentHome() {
                                   <div className="admin-table-placeholder">ไม่มีรูป</div>
                                 )}
                                 <div className="admin-table-details">
-                                  <div className="admin-table-name">{listing.name}</div>
+                                  <button
+                                    className="admin-table-name-button"
+                                    type="button"
+                                    aria-haspopup="dialog"
+                                    onClick={() => openListingDetails(listing)}
+                                  >{listing.name}</button>
                                   <div className="admin-table-timestamp">ลงประกาศ: {formatListingTimestamp(listing.created_at)}</div>
                                   <div className="admin-table-timestamp">แก้ไขล่าสุด: {formatListingTimestamp(listing.updated_at)}</div>
                                 </div>
@@ -1056,7 +1055,12 @@ export default function ApartmentHome() {
                                   <div className="admin-table-placeholder">ไม่มีรูป</div>
                                 )}
                                 <div className="admin-table-details">
-                                  <div className="admin-table-name">{listing.name}</div>
+                                  <button
+                                    className="admin-table-name-button"
+                                    type="button"
+                                    aria-haspopup="dialog"
+                                    onClick={() => openListingDetails(listing)}
+                                  >{listing.name}</button>
                                   <div className="admin-table-timestamp">{listing.area || "ไม่ได้ระบุทำเล"}</div>
                                   <div className="admin-table-timestamp">ผู้โพสต์: {listing.owner_email || "บัญชีผู้ใช้เดิม"}</div>
                                 </div>
@@ -1085,6 +1089,15 @@ export default function ApartmentHome() {
             </div>
           </main>
         </div>
+        {selectedListing && (
+          <ListingDetailsModal
+            listing={selectedListing}
+            imageIndex={detailImageIndex}
+            setImageIndex={setDetailImageIndex}
+            roomStatusLabels={ROOM_STATUS_LABELS}
+            onClose={() => setSelectedListing(null)}
+          />
+        )}
         {pendingReviewListing && (
           <AdminReviewModal
             listing={pendingReviewListing}
