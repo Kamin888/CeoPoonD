@@ -301,7 +301,7 @@ export default function ApartmentHome() {
 
     setAuthLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(`${apiUrl}/api/auth/${authMode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -332,7 +332,7 @@ export default function ApartmentHome() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+    const apiUrl = import.meta.env.VITE_API_URL || "";
 
     async function restoreSession() {
       try {
@@ -356,7 +356,7 @@ export default function ApartmentHome() {
   }, []);
 
   const logout = async () => {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+    const apiUrl = import.meta.env.VITE_API_URL || "";
     try {
       const response = await fetch(`${apiUrl}/api/auth/logout`, {
         method: "POST",
@@ -409,7 +409,7 @@ export default function ApartmentHome() {
     setListingError("");
     setListingLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const payload = {
         ...listingForm,
         status,
@@ -473,7 +473,7 @@ export default function ApartmentHome() {
       setLoading(true);
       setError("");
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+        const apiUrl = import.meta.env.VITE_API_URL || "";
         const response = await fetch(`${apiUrl}/api/listings?${params}`, {
           signal: controller.signal,
         });
@@ -507,7 +507,7 @@ export default function ApartmentHome() {
     const controller = new AbortController();
     async function loadMyListings() {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+        const apiUrl = import.meta.env.VITE_API_URL || "";
         const response = await fetch(`${apiUrl}/api/my-listings`, {
           credentials: "include",
           signal: controller.signal,
@@ -537,7 +537,7 @@ export default function ApartmentHome() {
     const controller = new AbortController();
     async function loadAdminListings() {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+        const apiUrl = import.meta.env.VITE_API_URL || "";
         const response = await fetch(`${apiUrl}/api/admin/listings`, {
           credentials: "include",
           signal: controller.signal,
@@ -561,7 +561,7 @@ export default function ApartmentHome() {
     const controller = new AbortController();
     async function loadTrash() {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+        const apiUrl = import.meta.env.VITE_API_URL || "";
         const response = await fetch(`${apiUrl}/api/admin/listings/trash`, {
           credentials: "include",
           signal: controller.signal,
@@ -591,7 +591,7 @@ export default function ApartmentHome() {
     async function loadPendingReviews() {
       setReviewLoading(true);
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+        const apiUrl = import.meta.env.VITE_API_URL || "";
         const response = await fetch(`${apiUrl}/api/admin/listings/pending`, {
           credentials: "include",
           signal: controller.signal,
@@ -620,7 +620,7 @@ export default function ApartmentHome() {
     setApprovingListingId(id);
     setReviewError("");
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(`${apiUrl}/api/admin/listings/${id}/approve`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -641,7 +641,7 @@ export default function ApartmentHome() {
   const updateListingStatus = async (id, status) => {
     setMyListingsError("");
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(`${apiUrl}/api/listings/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -660,7 +660,7 @@ export default function ApartmentHome() {
     setAdminListingsError("");
     setUpdatingRoomStatusId(listing.id);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(`${apiUrl}/api/admin/listings/${listing.id}/room-status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -706,7 +706,7 @@ export default function ApartmentHome() {
     }
     setAdminListingsError("");
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(`${apiUrl}/api/admin/listings/${listing.id}`, {
         method: "DELETE",
         credentials: "include",
@@ -724,7 +724,7 @@ export default function ApartmentHome() {
 
   const restoreAdminListing = async (listing) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(`${apiUrl}/api/admin/listings/${listing.id}/restore`, {
         method: "PATCH",
         credentials: "include",
@@ -741,7 +741,7 @@ export default function ApartmentHome() {
   const permanentlyDeleteAdminListing = async (listing) => {
     if (!window.confirm(`ลบประกาศ “${listing.name}” ถาวรทันที? การดำเนินการนี้ย้อนกลับไม่ได้`)) return;
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(`${apiUrl}/api/admin/listings/${listing.id}/permanent`, {
         method: "DELETE",
         credentials: "include",
