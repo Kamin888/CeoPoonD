@@ -1,5 +1,6 @@
 import React from "react";
 import { Localized } from "../i18n.js";
+import ThemeToggle from "./ThemeToggle.jsx";
 
 export default function AuthScreen({
   authForm,
@@ -10,6 +11,8 @@ export default function AuthScreen({
   goDashboard,
   language,
   onToggleLanguage,
+  theme,
+  onToggleTheme,
 }) {
   return (
     <Localized language={language}>
@@ -18,6 +21,7 @@ export default function AuthScreen({
         <header>
           <button className="logo logo-button" type="button" onClick={goDashboard} aria-label="Finzhome แดชบอร์ด">Finzhome</button>
           <nav>
+            <ThemeToggle theme={theme} language={language} onToggle={onToggleTheme} />
             <button className="nav-link" type="button" onClick={onToggleLanguage}>{language === "th" ? "English" : "ไทย"}</button>
           </nav>
         </header>

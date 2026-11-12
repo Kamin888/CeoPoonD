@@ -4,6 +4,7 @@ import { Localized, translateText } from "./i18n.js";
 import AuthScreen from "./components/AuthScreen.jsx";
 import AdminReviewModal from "./components/AdminReviewModal.jsx";
 import ListingDetailsModal from "./components/ListingDetailsModal.jsx";
+import ThemeToggle from "./components/ThemeToggle.jsx";
 
 const EMPTY_LISTING = {
   listingType: "rent",
@@ -158,6 +159,9 @@ function createListingsExcelXml(listings, language) {
 
 export default function ApartmentHome() {
   const [language, setLanguage] = useState("th");
+  const [theme, setTheme] = useState(() =>
+    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  );
   const [authForm, setAuthForm] = useState({ email: "", password: "" });
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
@@ -195,12 +199,18 @@ export default function ApartmentHome() {
   const [detailImageIndex, setDetailImageIndex] = useState(0);
 
   const toggleLanguage = () => setLanguage((current) => current === "th" ? "en" : "th");
+  const toggleTheme = () => setTheme((current) => current === "dark" ? "light" : "dark");
   const t = (text) => translateText(language, text);
 
   useEffect(() => {
     document.documentElement.lang = language;
     document.title = language === "en" ? "Finzhome Admin Dashboard" : "Finzhome แดชบอร์ดผู้ดูแล";
   }, [language]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  }, [theme]);
 
   const normalizedAdminNameFilter = adminNameFilter.trim().toLocaleLowerCase();
   const visibleAdminListings = adminListings.filter((listing) => listing.status !== "pending_review");
@@ -648,6 +658,7 @@ export default function ApartmentHome() {
             <button className="logo logo-button" type="button" onClick={goDashboard} aria-label="Finzhome แดชบอร์ด">Finzhome<small> ADMIN</small></button>
             <nav>
               <span className="user-email">{session.email}</span>
+              <ThemeToggle theme={theme} language={language} onToggle={toggleTheme} />
               <button className="nav-link" type="button" onClick={toggleLanguage}>{language === "th" ? "English" : "ไทย"}</button>
               <button className="nav-link" onClick={logout}>ออกจากระบบ</button>
             </nav>
@@ -1104,6 +1115,7 @@ export default function ApartmentHome() {
           <header>
             <button className="logo logo-button" type="button" onClick={goDashboard} aria-label="Finzhome แดชบอร์ด">Finzhome</button>
             <nav>
+              <ThemeToggle theme={theme} language={language} onToggle={toggleTheme} />
               <button className="nav-link" type="button" onClick={toggleLanguage}>{language === "th" ? "English" : "ไทย"}</button>
               <button className="nav-link" onClick={() => { setListingMode(false); setAdminDashboard(adminEditingListing); }}>กลับแดชบอร์ด</button>
             </nav>
@@ -1333,6 +1345,7 @@ export default function ApartmentHome() {
             <button className="logo logo-button" type="button" onClick={goDashboard}>Finzhome</button>
             <nav>
               <span className="user-email">{session.email}</span>
+              <ThemeToggle theme={theme} language={language} onToggle={toggleTheme} />
               <button className="nav-link" type="button" onClick={toggleLanguage}>{language === "th" ? "English" : "ไทย"}</button>
               <button className="nav-link" onClick={logout}>ออกจากระบบ</button>
             </nav>
@@ -1359,6 +1372,8 @@ export default function ApartmentHome() {
       goDashboard={goDashboard}
       language={language}
       onToggleLanguage={toggleLanguage}
+      theme={theme}
+      onToggleTheme={toggleTheme}
     />
   );
 }
