@@ -196,6 +196,7 @@ export default function ApartmentHome() {
   const [adminMinPriceFilter, setAdminMinPriceFilter] = useState("");
   const [adminMaxPriceFilter, setAdminMaxPriceFilter] = useState("");
   const [adminNameFilter, setAdminNameFilter] = useState("");
+  const [adminCodeFilter, setAdminCodeFilter] = useState("");
   const [updatingRoomStatusId, setUpdatingRoomStatusId] = useState(null);
   const [openAdminActionMenuId, setOpenAdminActionMenuId] = useState(null);
   const [reviewError, setReviewError] = useState("");
@@ -239,15 +240,18 @@ export default function ApartmentHome() {
   }, [theme]);
 
   const normalizedAdminNameFilter = adminNameFilter.trim().toLocaleLowerCase();
+  const normalizedAdminCodeFilter = adminCodeFilter.trim().toLocaleUpperCase();
   const visibleAdminListings = adminListings.filter((listing) => listing.status !== "pending_review");
   const filteredAdminListings = visibleAdminListings.filter((listing) => {
     const matchesName = !normalizedAdminNameFilter ||
       listing.name.toLocaleLowerCase().includes(normalizedAdminNameFilter);
+    const matchesCode = !normalizedAdminCodeFilter ||
+      formatListingCode(listing.id, listingCodePrefix).toLocaleUpperCase().includes(normalizedAdminCodeFilter);
     const matchesRoomStatus = adminRoomStatusFilter === "all" ||
       (listing.room_status || "vacant") === adminRoomStatusFilter;
     const matchesMinPrice = adminMinPriceFilter === "" || listing.price >= Number(adminMinPriceFilter);
     const matchesMaxPrice = adminMaxPriceFilter === "" || listing.price <= Number(adminMaxPriceFilter);
-    return matchesName && matchesRoomStatus && matchesMinPrice && matchesMaxPrice;
+    return matchesName && matchesCode && matchesRoomStatus && matchesMinPrice && matchesMaxPrice;
   });
 
   const goDashboard = () => {
@@ -847,6 +851,15 @@ export default function ApartmentHome() {
               {adminExportError && <p className="form-error" role="alert">{adminExportError}</p>}
               <div className="admin-listing-filters" aria-label="ตัวกรองประกาศ">
                 <label>
+                  รหัสโครงการ
+                  <input
+                    type="search"
+                    value={adminCodeFilter}
+                    onChange={(event) => setAdminCodeFilter(event.target.value)}
+                    placeholder="ค้นหารหัส"
+                  />
+                </label>
+                <label>
                   ชื่อโครงการ
                   <input
                     type="search"
@@ -887,12 +900,13 @@ export default function ApartmentHome() {
                   className="secondary-button"
                   type="button"
                   onClick={() => {
+                    setAdminCodeFilter("");
                     setAdminNameFilter("");
                     setAdminRoomStatusFilter("all");
                     setAdminMinPriceFilter("");
                     setAdminMaxPriceFilter("");
                   }}
-                  disabled={!adminNameFilter && adminRoomStatusFilter === "all" && !adminMinPriceFilter && !adminMaxPriceFilter}
+                  disabled={!adminCodeFilter && !adminNameFilter && adminRoomStatusFilter === "all" && !adminMinPriceFilter && !adminMaxPriceFilter}
                 >
                   ล้างตัวกรอง
                 </button>

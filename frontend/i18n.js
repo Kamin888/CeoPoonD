@@ -137,6 +137,8 @@ const ENGLISH = {
   "ดาวน์โหลด Excel": "Download Excel",
   "ลงข้อมูล": "Add listing",
   "ตัวกรองประกาศ": "Listing filters",
+  "รหัสโครงการ": "Project code",
+  "ค้นหารหัส": "Search code",
   "ชื่อโครงการ": "Project name",
   "ค้นหาชื่อ": "Search name",
   "สถานะห้อง": "Occupancy status",

@@ -149,7 +149,7 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-export-button{white-space:nowrap}
 .ah .admin-export-button,.ah .admin-create-listing-button{border-color:#007a98;background:#007a98;color:#fff;font-weight:700}
 .ah .admin-create-listing-button{margin-left:auto}
-.ah .admin-listing-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:end;gap:12px;margin:16px 0}
+.ah .admin-listing-filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:end;gap:8px;margin:16px 0}
 .ah .admin-listing-filters label,.ah .admin-room-status{display:grid;gap:5px;color:var(--muted);font-size:12px;font-weight:600}
 .ah .admin-listing-filters input,.ah .admin-listing-filters select,.ah .admin-room-status select{width:100%;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
 .ah .admin-listing-filters button{min-height:38px}
@@ -252,6 +252,7 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .listing-contact-links{justify-items:end}
 .ah .listing-contact-links a{color:var(--accent);font-weight:700;text-decoration:none}
 @media(max-width:600px){
+  .ah .admin-listing-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .ah .listing-stepper{gap:2px}.ah .listing-stepper li{display:grid;justify-items:center;gap:4px;text-align:center;font-size:11px}
   .ah .listing-grid{grid-template-columns:1fr}
   .ah .listing-review dl{grid-template-columns:1fr;gap:2px}
@@ -297,6 +298,9 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
   .ah .listing-quick-facts{grid-template-columns:repeat(2,minmax(0,1fr));margin:16px 0}
   .ah .listing-contact{flex-direction:column}
   .ah .listing-contact-links{justify-items:start}
+}
+@media(min-width:601px) and (max-width:760px){
+  .ah .admin-listing-filters{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 
 [data-theme="dark"] .ah{
