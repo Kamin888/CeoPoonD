@@ -197,6 +197,7 @@ export default function ApartmentHome() {
   const [adminMaxPriceFilter, setAdminMaxPriceFilter] = useState("");
   const [adminNameFilter, setAdminNameFilter] = useState("");
   const [updatingRoomStatusId, setUpdatingRoomStatusId] = useState(null);
+  const [openAdminActionMenuId, setOpenAdminActionMenuId] = useState(null);
   const [reviewError, setReviewError] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
   const [approvingListingId, setApprovingListingId] = useState(null);
@@ -204,6 +205,24 @@ export default function ApartmentHome() {
   const [selectedListing, setSelectedListing] = useState(null);
   const [pendingReviewListing, setPendingReviewListing] = useState(null);
   const [detailImageIndex, setDetailImageIndex] = useState(0);
+
+  useEffect(() => {
+    if (openAdminActionMenuId === null) return undefined;
+    const handlePointerDown = (event) => {
+      if (event.target instanceof Element && !event.target.closest(".admin-actions-menu")) {
+        setOpenAdminActionMenuId(null);
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setOpenAdminActionMenuId(null);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openAdminActionMenuId]);
 
   const toggleLanguage = () => setLanguage((current) => current === "th" ? "en" : "th");
   const toggleTheme = () => setTheme((current) => current === "dark" ? "light" : "dark");
@@ -934,8 +953,51 @@ export default function ApartmentHome() {
                             </td>
                             <td>
                               <div className="admin-manage-actions">
-                                <button className="secondary-button" onClick={() => editAdminListing(listing)}>แก้ไข</button>
-                                <button className="danger-button" onClick={() => deleteAdminListing(listing)}>ย้ายไปถังขยะ</button>
+                                <div className="admin-actions-menu">
+                                  <button
+                                    className="secondary-button admin-icon-button admin-edit-icon-button"
+                                    type="button"
+                                    aria-label={`เปิดเมนูจัดการ ${listing.name}`}
+                                    aria-expanded={openAdminActionMenuId === listing.id}
+                                    aria-controls={`admin-actions-${listing.id}`}
+                                    title="เมนูจัดการ"
+                                    onClick={() => setOpenAdminActionMenuId((openId) => openId === listing.id ? null : listing.id)}
+                                  >
+                                    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                                      <path d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                  </button>
+                                  {openAdminActionMenuId === listing.id && (
+                                    <div className="admin-actions-menu-items" id={`admin-actions-${listing.id}`}>
+                                      <button
+                                        className="secondary-button admin-actions-menu-item"
+                                        type="button"
+                                        onClick={() => {
+                                          setOpenAdminActionMenuId(null);
+                                          editAdminListing(listing);
+                                        }}
+                                      >
+                                        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                                          <path d="m14 4 6 6-3 3-6-6zM12 8 4 16v4h4l8-8" />
+                                        </svg>
+                                        <span>แก้ไข</span>
+                                      </button>
+                                      <button
+                                        className="danger-button admin-actions-menu-item"
+                                        type="button"
+                                        onClick={() => {
+                                          setOpenAdminActionMenuId(null);
+                                          deleteAdminListing(listing);
+                                        }}
+                                      >
+                                        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                                          <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 5v5m4-5v5" />
+                                        </svg>
+                                        <span>ย้ายไปถังขยะ</span>
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </td>
                           </tr>

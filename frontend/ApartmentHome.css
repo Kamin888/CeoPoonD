@@ -195,6 +195,9 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-review-modal-actions>span{color:var(--muted);font-size:13px}
 .ah .admin-listings-table .admin-manage-actions{gap:4px;flex-wrap:nowrap}
 .ah .admin-listings-table .secondary-button,.ah .admin-listings-table .danger-button{padding:5px 6px;font-size:12px;white-space:nowrap}
+.ah .admin-listings-table .admin-manage-actions .admin-icon-button{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:0}
+.ah .admin-listings-table .admin-manage-actions .admin-edit-icon-button{border-color:#007a98;background:#007a98;color:#fff}
+.ah .admin-icon-button svg{display:block;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ah .admin-listings-table .admin-room-status{width:min(150px,100%);margin:0}
 .ah .admin-manage-item{display:grid;grid-template-columns:90px minmax(0,1fr) auto;align-items:center;gap:14px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
 .ah .admin-manage-item>img,.ah .admin-manage-placeholder{width:90px;height:72px;object-fit:cover;border-radius:7px;background:var(--hero)}
@@ -208,6 +211,13 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .room-status-vacant{background:#e5f4e9;color:#176b3a}
 .ah .room-status-occupied{background:#fff0e8;color:#9b4b22}
 .ah .danger-button{border:1px solid #efb4b1;border-radius:8px;background:#fff2f1;color:#a12c27;padding:9px 14px;font:600 14px inherit;font-family:inherit;cursor:pointer}
+.ah .admin-listings-table .admin-actions-menu{position:relative;display:grid;gap:4px;width:100%}
+.ah .admin-actions-menu-items{position:absolute;top:calc(100% + 4px);left:0;z-index:10;display:grid;gap:4px;width:100%;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);box-shadow:0 6px 16px #0002}
+.ah .admin-listings-table .admin-actions-menu-item{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;min-width:0;min-height:32px;padding:6px 8px;font-size:12px;text-align:left;white-space:normal}
+.ah .admin-actions-menu-item svg{flex:0 0 16px}
+.ah .admin-actions-menu-item.danger-button{border-color:var(--line);background:var(--surface);color:#a12c27}
+.ah .admin-actions-menu-item.danger-button:hover:not(:disabled){background:var(--surface)}
+[data-theme="dark"] .ah .admin-actions-menu-item.danger-button{color:#ff8a80}
 .ah .listing-modal-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:24px;background:#06131ecc;backdrop-filter:blur(5px)}
 .ah .listing-modal{position:relative;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);width:min(1100px,100%);max-height:min(90vh,900px);overflow:auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 80px #0005}
 .ah .listing-modal-close{position:absolute;z-index:2;top:12px;right:12px;width:40px;height:40px;border:1px solid #ffffff80;border-radius:50%;background:#102030b8;color:#fff;font-size:28px;line-height:1;cursor:pointer}
