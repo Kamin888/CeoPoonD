@@ -16,6 +16,7 @@ export default function ListingDetailsModal({
   roomStatusLabels,
   onClose,
   language,
+  listingCode,
 }) {
   const details = listing.details || {};
   const images = details.images || [];
@@ -91,7 +92,7 @@ export default function ListingDetailsModal({
         <div className="listing-modal-content">
           <div className="listing-modal-heading">
             <div>
-              <span className="eyebrow">{details.listingType === "sale" ? "ประกาศขาย" : "ประกาศให้เช่า"} · {PROPERTY_TYPES[details.propertyType] || details.otherPropertyType || "อสังหาริมทรัพย์"}</span>
+              <span className="eyebrow">{listingCode} · {details.listingType === "sale" ? "ประกาศขาย" : "ประกาศให้เช่า"} · {PROPERTY_TYPES[details.propertyType] || details.otherPropertyType || "อสังหาริมทรัพย์"}</span>
               <h2 id="listing-modal-title">{listing.name}</h2>
               <p className="listing-modal-location">{location || listing.area}</p>
             </div>

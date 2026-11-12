@@ -77,6 +77,10 @@ function formatNumber(value, language) {
   return Number(value).toLocaleString(language === "en" ? "en-US" : "th-TH");
 }
 
+function formatListingCode(id, prefix) {
+  return prefix ? `${prefix}${String(id).padStart(4, "0")}` : "—";
+}
+
 function escapeXml(value) {
   return String(value ?? "")
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
@@ -87,9 +91,9 @@ function escapeXml(value) {
     .replace(/'/g, "&apos;");
 }
 
-function createListingsExcelXml(listings, language) {
+function createListingsExcelXml(listings, language, prefix) {
   const columns = [
-    ["รหัสประกาศ", (listing) => listing.id],
+    ["รหัส", (listing) => formatListingCode(listing.id, prefix)],
     ["สถานะ", (listing) => translateText(language, STATUS_LABELS[listing.status] || listing.status)],
     ["สถานะผู้เช่า", (listing) => translateText(language, ROOM_STATUS_LABELS[listing.room_status] || "ว่าง")],
     ["ประเภทประกาศ", (listing) => translateText(language, listing.details?.listingType === "sale" ? "ขาย" : "ให้เช่า")],
@@ -182,6 +186,12 @@ export default function ApartmentHome() {
   const [adminListings, setAdminListings] = useState([]);
   const [adminListingsError, setAdminListingsError] = useState("");
   const [adminExportError, setAdminExportError] = useState("");
+  const [listingCodePrefix, setListingCodePrefix] = useState("");
+  const [listingCodePrefixDraft, setListingCodePrefixDraft] = useState("");
+  const [listingCodePrefixLoading, setListingCodePrefixLoading] = useState(true);
+  const [listingCodePrefixSaving, setListingCodePrefixSaving] = useState(false);
+  const [listingCodePrefixError, setListingCodePrefixError] = useState("");
+  const [listingCodePrefixEditorOpen, setListingCodePrefixEditorOpen] = useState(false);
   const [trashedListings, setTrashedListings] = useState([]);
   const [trashError, setTrashError] = useState("");
   const [adminSection, setAdminSection] = useState("all");
@@ -445,6 +455,42 @@ export default function ApartmentHome() {
   }, [session, listingRefresh]);
 
   useEffect(() => {
+    if (session?.role !== "admin") {
+      setListingCodePrefixLoading(false);
+      setListingCodePrefixError("");
+      return undefined;
+    }
+    const controller = new AbortController();
+    async function loadListingCodePrefix() {
+      setListingCodePrefixLoading(true);
+      setListingCodePrefixError("");
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const response = await fetch(`${apiUrl}/api/admin/settings/listing-code-prefix`, {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "โหลดคำนำหน้ารหัสไม่สำเร็จ");
+        const prefix = result.data?.prefix;
+        if (typeof prefix !== "string" || !/^[A-Z]{1,10}$/.test(prefix)) {
+          throw new Error("คำนำหน้ารหัสที่ได้รับไม่ถูกต้อง");
+        }
+        setListingCodePrefix(prefix);
+        setListingCodePrefixDraft(prefix);
+      } catch (requestError) {
+        if (requestError.name !== "AbortError") {
+          setListingCodePrefixError(requestError.message || "โหลดคำนำหน้ารหัสไม่สำเร็จ");
+        }
+      } finally {
+        if (!controller.signal.aborted) setListingCodePrefixLoading(false);
+      }
+    }
+    loadListingCodePrefix();
+    return () => controller.abort();
+  }, [session]);
+
+  useEffect(() => {
     if (session?.role !== "admin") return undefined;
     const controller = new AbortController();
     async function loadTrash() {
@@ -630,10 +676,45 @@ export default function ApartmentHome() {
     }
   };
 
+  const saveListingCodePrefix = async (event) => {
+    event.preventDefault();
+    const prefix = listingCodePrefixDraft.trim().toUpperCase();
+    if (!/^[A-Z]{1,10}$/.test(prefix)) {
+      setListingCodePrefixError("คำนำหน้ารหัสต้องเป็นตัวอักษรภาษาอังกฤษ 1-10 ตัว");
+      return;
+    }
+
+    setListingCodePrefixSaving(true);
+    setListingCodePrefixError("");
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(`${apiUrl}/api/admin/settings/listing-code-prefix`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ prefix }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "บันทึกคำนำหน้ารหัสไม่สำเร็จ");
+      const savedPrefix = result.data?.prefix;
+      if (typeof savedPrefix !== "string" || !/^[A-Z]{1,10}$/.test(savedPrefix)) {
+        throw new Error("คำนำหน้ารหัสที่ได้รับไม่ถูกต้อง");
+      }
+      setListingCodePrefix(savedPrefix);
+      setListingCodePrefixDraft(savedPrefix);
+      setListingCodePrefixEditorOpen(false);
+      setNotice(`เปลี่ยนคำนำหน้ารหัสเป็น ${savedPrefix} แล้ว`);
+    } catch (requestError) {
+      setListingCodePrefixError(requestError.message || "บันทึกคำนำหน้ารหัสไม่สำเร็จ");
+    } finally {
+      setListingCodePrefixSaving(false);
+    }
+  };
+
   const exportAdminListings = () => {
     setAdminExportError("");
     try {
-      const workbook = createListingsExcelXml(filteredAdminListings, language);
+      const workbook = createListingsExcelXml(filteredAdminListings, language, listingCodePrefix);
       const blob = new Blob(["\uFEFF", workbook], { type: "application/vnd.ms-excel;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -710,6 +791,7 @@ export default function ApartmentHome() {
                   <table className="admin-listings-table">
                     <thead>
                       <tr>
+                        <th scope="col">รหัส</th>
                         <th scope="col">ชื่อโครงการ</th>
                         <th scope="col">ราคา</th>
                         <th scope="col">สถานะ</th>
@@ -721,6 +803,7 @@ export default function ApartmentHome() {
                         const details = listing.details || {};
                         return (
                           <tr key={listing.id}>
+                            <td><span className="admin-project-code">{formatListingCode(listing.id, listingCodePrefix)}</span></td>
                             <th scope="row">
                               <div className="admin-table-listing">
                                 {details.images?.[0] ? (
@@ -766,7 +849,7 @@ export default function ApartmentHome() {
                     className="secondary-button admin-export-button"
                     type="button"
                     onClick={exportAdminListings}
-                    disabled={filteredAdminListings.length === 0 || Boolean(adminListingsError)}
+                    disabled={filteredAdminListings.length === 0 || Boolean(adminListingsError) || listingCodePrefixLoading || Boolean(listingCodePrefixError)}
                   >
                     <span aria-hidden="true">↓</span> ดาวน์โหลด Excel
                   </button>
@@ -777,8 +860,54 @@ export default function ApartmentHome() {
                   >
                     ลงข้อมูล
                   </button>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => {
+                      setListingCodePrefixDraft(listingCodePrefix);
+                      setListingCodePrefixEditorOpen((open) => !open);
+                    }}
+                    disabled={listingCodePrefixLoading}
+                  >
+                    {listingCodePrefixLoading ? "กำลังโหลด..." : <>เปลี่ยนคำนำหน้า <strong>({listingCodePrefix || "—"})</strong></>}
+                  </button>
                 </div>
               </div>
+              {listingCodePrefixEditorOpen && (
+                <form className="admin-code-prefix-form" onSubmit={saveListingCodePrefix}>
+                  <label>
+                    คำนำหน้ารหัส
+                    <input
+                      type="text"
+                      value={listingCodePrefixDraft}
+                      onChange={(event) => setListingCodePrefixDraft(event.target.value)}
+                      maxLength={10}
+                      pattern="[A-Za-z]{1,10}"
+                      autoCapitalize="characters"
+                      required
+                    />
+                  </label>
+                  <button
+                    className="secondary-button"
+                    type="submit"
+                    disabled={listingCodePrefixSaving || listingCodePrefixDraft.trim().toUpperCase() === listingCodePrefix}
+                  >
+                    {listingCodePrefixSaving ? "กำลังบันทึก..." : "บันทึกคำนำหน้า"}
+                  </button>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => {
+                      setListingCodePrefixEditorOpen(false);
+                      setListingCodePrefixDraft(listingCodePrefix);
+                    }}
+                    disabled={listingCodePrefixSaving}
+                  >
+                    ยกเลิก
+                  </button>
+                </form>
+              )}
+              {listingCodePrefixError && <p className="form-error" role="alert">{listingCodePrefixError}</p>}
               {adminListingsError && <p className="form-error" role="alert">{adminListingsError}</p>}
               {adminExportError && <p className="form-error" role="alert">{adminExportError}</p>}
               <div className="admin-listing-filters" aria-label="ตัวกรองประกาศ">
@@ -843,6 +972,7 @@ export default function ApartmentHome() {
                     <table className="admin-listings-table">
                       <thead>
                         <tr>
+                          <th scope="col">รหัส</th>
                           <th scope="col">ชื่อ</th>
                           <th scope="col">ราคา</th>
                           <th scope="col">สถานะ</th>
@@ -852,6 +982,7 @@ export default function ApartmentHome() {
                       <tbody>
                         {filteredAdminListings.map((listing) => (
                           <tr key={listing.id}>
+                            <td><span className="admin-project-code">{formatListingCode(listing.id, listingCodePrefix)}</span></td>
                             <th scope="row">
                               <div className="admin-table-listing">
                                 {listing.details?.images?.[0] ? (
@@ -920,6 +1051,7 @@ export default function ApartmentHome() {
                     <table className="admin-listings-table">
                       <thead>
                         <tr>
+                          <th scope="col">รหัส</th>
                           <th scope="col">ชื่อ</th>
                           <th scope="col">ราคา</th>
                           <th scope="col">สถานะ</th>
@@ -929,6 +1061,7 @@ export default function ApartmentHome() {
                       <tbody>
                         {trashedListings.map((listing) => (
                           <tr key={listing.id}>
+                            <td><span className="admin-project-code">{formatListingCode(listing.id, listingCodePrefix)}</span></td>
                             <th scope="row">
                               <div className="admin-table-listing">
                                 {listing.details?.images?.[0] ? (
@@ -978,6 +1111,7 @@ export default function ApartmentHome() {
             setImageIndex={setDetailImageIndex}
             roomStatusLabels={ROOM_STATUS_LABELS}
             language={language}
+            listingCode={formatListingCode(selectedListing.id, listingCodePrefix)}
             onClose={() => setSelectedListing(null)}
           />
         )}
@@ -988,6 +1122,7 @@ export default function ApartmentHome() {
             onApprove={() => approveListing(pendingReviewListing.id)}
             approving={approvingListingId === pendingReviewListing.id}
             language={language}
+            listingCode={formatListingCode(pendingReviewListing.id, listingCodePrefix)}
           />
         )}
       </div>

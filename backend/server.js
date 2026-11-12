@@ -103,6 +103,18 @@ async function initializeDatabase() {
     ALTER COLUMN updated_at SET DEFAULT NOW(),
     ALTER COLUMN updated_at SET NOT NULL
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    INSERT INTO app_settings (key, value)
+    VALUES ('listing_code_prefix', 'SSE')
+    ON CONFLICT (key) DO NOTHING
+  `);
   await purgeExpiredListings();
   await pool.query(
     `DELETE FROM listings
@@ -441,6 +453,38 @@ app.get("/api/admin/listings", requireAuth, requireAdmin, async (_request, respo
        ORDER BY listings.created_at DESC, listings.id DESC`
     );
     response.json({ data: rows });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/admin/settings/listing-code-prefix", requireAuth, requireAdmin, async (_request, response, next) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT value FROM app_settings WHERE key = 'listing_code_prefix'"
+    );
+    if (!rows[0]) throw new Error("Listing code prefix setting is not initialized.");
+    response.json({ data: { prefix: rows[0].value } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.put("/api/admin/settings/listing-code-prefix", requireTrustedOrigin, requireAuth, requireAdmin, async (request, response, next) => {
+  try {
+    const rawPrefix = request.body?.prefix;
+    const prefix = typeof rawPrefix === "string" ? rawPrefix.trim().toUpperCase() : "";
+    if (!/^[A-Z]{1,10}$/.test(prefix)) {
+      return response.status(400).json({ error: "คำนำหน้ารหัสต้องเป็นตัวอักษรภาษาอังกฤษ 1-10 ตัว" });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO app_settings (key, value, updated_at)
+       VALUES ('listing_code_prefix', $1, NOW())
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+       RETURNING value`,
+      [prefix]
+    );
+    response.json({ data: { prefix: rows[0].value } });
   } catch (error) {
     next(error);
   }

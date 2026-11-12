@@ -277,6 +277,15 @@ const ENGLISH = {
   "สรุปประกาศ": "Listing summary",
   "สถานะห้อง:": "Occupancy status:",
   "ผู้โพสต์:": "Posted by:",
+  "รหัส": "Code",
+  "คำนำหน้ารหัส": "Code prefix",
+  "เปลี่ยนคำนำหน้า": "Change prefix",
+  "บันทึกคำนำหน้า": "Save prefix",
+  "ยกเลิก": "Cancel",
+  "โหลดคำนำหน้ารหัสไม่สำเร็จ": "Unable to load the code prefix.",
+  "บันทึกคำนำหน้ารหัสไม่สำเร็จ": "Unable to save the code prefix.",
+  "คำนำหน้ารหัสต้องเป็นตัวอักษรภาษาอังกฤษ 1-10 ตัว": "Code prefix must be 1–10 English letters.",
+  "คำนำหน้ารหัสที่ได้รับไม่ถูกต้อง": "Received an invalid code prefix.",
   "บัญชีเดิม": "previous account",
   "Finzhome แดชบอร์ดผู้ดูแล": "Finzhome Admin Dashboard",
   "กรุณากรอกข้อมูลที่จำเป็นให้ครบก่อนดำเนินการต่อ": "Complete all required information before continuing.",
@@ -389,6 +398,7 @@ const PATTERNS = [
   [/^ลบประกาศ “(.+)” ถาวรทันที\? การดำเนินการนี้ย้อนกลับไม่ได้$/, "Permanently delete “$1” now? This action cannot be undone."],
   [/^ลบประกาศ “(.+)” ถาวรแล้ว$/, "Permanently deleted “$1”."],
   [/^ยืนยันอนุมัติ “(.+)” และเผยแพร่ต่อสาธารณะหรือไม่\?$/, "Approve “$1” and publish it publicly?"],
+  [/^เปลี่ยนคำนำหน้ารหัสเป็น ([A-Z]+) แล้ว$/, "Code prefix changed to $1."],
 ];
 
 export function translateText(language, value) {

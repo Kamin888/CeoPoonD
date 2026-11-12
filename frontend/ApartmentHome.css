@@ -153,15 +153,21 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-listing-filters button{min-height:38px}
 .ah .admin-manage-list{display:grid;gap:10px}
 .ah .admin-listings-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
-.ah .admin-listings-table{width:100%;min-width:720px;border-collapse:collapse;text-align:left}
+.ah .admin-listings-table{width:100%;min-width:880px;border-collapse:collapse;text-align:left}
 .ah .admin-listings-table th,.ah .admin-listings-table td{padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
 .ah .admin-listings-table thead{background:var(--hero);color:var(--muted);font-size:13px}
 .ah .admin-listings-table thead th{font-weight:700}
 .ah .admin-listings-table tbody tr:last-child th,.ah .admin-listings-table tbody tr:last-child td{border-bottom:0}
-.ah .admin-listings-table tbody th{width:42%;font-weight:400}
-.ah .admin-listings-table tbody td:nth-child(2){width:18%;white-space:nowrap;font-weight:700;color:var(--accent)}
-.ah .admin-listings-table tbody td:nth-child(3){width:18%}
-.ah .admin-listings-table tbody td:last-child{width:22%}
+.ah .admin-listings-table tbody th{width:47%;font-weight:400}
+.ah .admin-listings-table tbody td:first-child{width:1%;padding-right:4px;padding-left:4px;white-space:nowrap}
+.ah .admin-listings-table tbody th{padding-left:4px}
+.ah .admin-listings-table tbody td:nth-child(3){width:18%;white-space:nowrap;font-weight:700;color:var(--accent)}
+.ah .admin-listings-table tbody td:nth-child(4){width:14%}
+.ah .admin-listings-table tbody td:last-child{width:20%}
+.ah .admin-project-code{color:var(--accent);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;font-weight:700}
+.ah .admin-code-prefix-form{display:flex;align-items:end;gap:9px;flex-wrap:wrap;margin:0 0 12px}
+.ah .admin-code-prefix-form label{display:grid;gap:5px;color:var(--muted);font-size:12px;font-weight:600}
+.ah .admin-code-prefix-form input{width:140px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;text-transform:uppercase}
 .ah .admin-table-listing{display:flex;align-items:center;gap:12px;min-width:0}
 .ah .admin-table-listing>img,.ah .admin-table-placeholder{flex:0 0 64px;width:64px;height:54px;border-radius:7px;object-fit:cover;background:var(--hero)}
 .ah .admin-table-placeholder{display:grid;place-items:center;color:var(--muted);font-size:11px}

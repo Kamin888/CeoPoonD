@@ -9,7 +9,7 @@ const PROPERTY_TYPES = {
   land: "ที่ดิน",
 };
 
-export default function AdminReviewModal({ listing, onClose, onApprove, approving, language }) {
+export default function AdminReviewModal({ listing, onClose, onApprove, approving, language, listingCode }) {
   const details = listing.details || {};
   const location = [
     details.subdistrict && `แขวง/ตำบล ${details.subdistrict}`,
@@ -38,6 +38,7 @@ export default function AdminReviewModal({ listing, onClose, onApprove, approvin
         <div className="admin-review-modal-content">
           <div className="admin-review-modal-heading">
             <div>
+              <span className="eyebrow">{listingCode}</span>
               <span className="status-badge status-pending_review">รอตรวจสอบ</span>
               <h2 id="admin-review-modal-title">{listing.name}</h2>
               <p>{location || listing.area || "ไม่ได้ระบุทำเล"}</p>
