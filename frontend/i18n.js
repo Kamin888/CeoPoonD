@@ -115,6 +115,8 @@ const ENGLISH = {
   "ในถังขยะ": "In trash",
   "รายการ": "items",
   "ราคา": "Price",
+  "ราคาเช่า": "Rental price",
+  "ราคาขาย": "Sale price",
   "จัดการ": "Actions",
   "ไม่มีรูป": "No image",
   "บัญชีผู้ใช้เดิม": "Previous user account",

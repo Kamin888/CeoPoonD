@@ -235,6 +235,8 @@ export default function ApartmentHome() {
   const normalizedAdminNameFilter = adminNameFilter.trim().toLocaleLowerCase();
   const normalizedAdminCodeFilter = adminCodeFilter.trim().toLocaleUpperCase();
   const visibleAdminListings = adminListings;
+  const vacantListingsCount = visibleAdminListings.filter((listing) => (listing.room_status || "vacant") === "vacant").length;
+  const occupiedListingsCount = visibleAdminListings.filter((listing) => listing.room_status === "occupied").length;
   const filteredAdminListings = visibleAdminListings.filter((listing) => {
     const matchesName = !normalizedAdminNameFilter ||
       listing.name.toLocaleLowerCase().includes(normalizedAdminNameFilter);
@@ -684,6 +686,8 @@ export default function ApartmentHome() {
                 <section className="admin-summary" aria-label="สรุปประกาศ">
                   <div><span>ประกาศที่ใช้งาน</span><strong>{visibleAdminListings.length}</strong></div>
                   <div><span>ในถังขยะ</span><strong>{trashedListings.length}</strong></div>
+                  <div><span>สถานะว่าง</span><strong>{vacantListingsCount}</strong></div>
+                  <div><span>สถานะไม่ว่าง</span><strong>{occupiedListingsCount}</strong></div>
                 </section>
             {adminSection === "all" && <section className="admin-manage-all" aria-label="ข้อมูลโครงการ">
               <div className="admin-manage-heading">
@@ -783,7 +787,8 @@ export default function ApartmentHome() {
                         <tr>
                           <th scope="col">รหัส</th>
                           <th scope="col">ชื่อ</th>
-                          <th scope="col">ราคา</th>
+                          <th scope="col">ราคาเช่า</th>
+                          <th scope="col">ราคาขาย</th>
                           <th scope="col">สถานะ</th>
                           <th scope="col">จัดการ</th>
                         </tr>
@@ -811,7 +816,8 @@ export default function ApartmentHome() {
                                 </div>
                               </div>
                             </th>
-                            <td>{formatNumber(listing.price, language)} บาท</td>
+                            <td>{listing.details?.listingType === "sale" ? "—" : `${formatNumber(listing.price, language)} บาท`}</td>
+                            <td>{listing.details?.listingType === "sale" ? `${formatNumber(listing.price, language)} บาท` : "—"}</td>
                             <td>
                               <label className="admin-room-status">
                                 <select
@@ -905,7 +911,8 @@ export default function ApartmentHome() {
                         <tr>
                           <th scope="col">รหัส</th>
                           <th scope="col">ชื่อ</th>
-                          <th scope="col">ราคา</th>
+                          <th scope="col">ราคาเช่า</th>
+                          <th scope="col">ราคาขาย</th>
                           <th scope="col">สถานะ</th>
                           <th scope="col">จัดการ</th>
                         </tr>
@@ -933,7 +940,8 @@ export default function ApartmentHome() {
                                 </div>
                               </div>
                             </th>
-                            <td>{formatNumber(listing.price, language)} บาท</td>
+                            <td>{listing.details?.listingType === "sale" ? "—" : `${formatNumber(listing.price, language)} บาท`}</td>
+                            <td>{listing.details?.listingType === "sale" ? `${formatNumber(listing.price, language)} บาท` : "—"}</td>
                             <td>
                               <span className="status-badge">ถังขยะ</span>
                               <div className="admin-table-timestamp">ลบถาวรวันที่ {new Date(listing.expires_at).toLocaleString(language === "en" ? "en-US" : "th-TH")}</div>
