@@ -17,7 +17,7 @@ export default function AuthScreen({
     <div className="ah">
       <div className="wrap">
         <header>
-          <button className="logo logo-button" type="button" onClick={goHome} aria-label="หอหา ไปหน้าหลัก">หอ<span>หา</span></button>
+          <button className="logo logo-button" type="button" onClick={goHome} aria-label="Finzhome ไปหน้าหลัก">Finzhome</button>
           <button className="nav-link" onClick={returnHome}>กลับหน้าหลัก</button>
         </header>
         <main className="auth-page">

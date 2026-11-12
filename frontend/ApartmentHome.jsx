@@ -781,7 +781,7 @@ export default function ApartmentHome() {
       <div className={`ah${adminSection === "all" || adminSection === "pending" || adminSection === "trash" ? " admin-table-view" : ""}`}>
         <div className="wrap admin-dashboard">
           <header>
-            <button className="logo logo-button" type="button" onClick={goHome} aria-label="หอหา ไปหน้าหลัก">หอ<span>หา</span><small> ADMIN</small></button>
+            <button className="logo logo-button" type="button" onClick={goHome} aria-label="Finzhome ไปหน้าหลัก">Finzhome<small> ADMIN</small></button>
             <nav>
               <span className="user-email">{session.email}</span>
               <button className="nav-link" onClick={() => setAdminDashboard(false)}>กลับหน้าเว็บไซต์</button>
@@ -1240,7 +1240,7 @@ export default function ApartmentHome() {
       <div className="ah">
         <div className="wrap">
           <header>
-            <button className="logo logo-button" type="button" onClick={goHome} aria-label="หอหา ไปหน้าหลัก">หอ<span>หา</span></button>
+            <button className="logo logo-button" type="button" onClick={goHome} aria-label="Finzhome ไปหน้าหลัก">Finzhome</button>
             <button className="nav-link" onClick={() => setListingMode(false)}>กลับหน้าหลัก</button>
           </header>
           <main className="auth-page listing-page">
@@ -1445,7 +1445,7 @@ export default function ApartmentHome() {
       <div className="site-header-sticky">
         <div className="wrap">
           <header className="site-header">
-            <button className="logo logo-button" type="button" onClick={goHome} aria-label="หอหา ไปหน้าหลัก">หอ<span>หา</span></button>
+            <button className="logo logo-button" type="button" onClick={goHome} aria-label="Finzhome ไปหน้าหลัก">Finzhome</button>
             <div className="header-search-area">
               <div className="search header-search" role="search">
                 <span className="search-icon" aria-hidden="true">⌕</span>
@@ -1505,7 +1505,6 @@ export default function ApartmentHome() {
               ) : (
                 <>
                   <button className="nav-link" onClick={() => openAuth("login")}>เข้าสู่ระบบ</button>
-                  <button className="btn" onClick={() => openAuth("register")}>สมัครสมาชิกฟรี</button>
                 </>
               )}
             </nav>
@@ -1546,7 +1545,7 @@ export default function ApartmentHome() {
       </main>
 
       <footer>
-        <div className="wrap">หอหา – ค้นหาและลงประกาศที่พัก</div>
+        <div className="wrap">Finzhome – ค้นหาและลงประกาศที่พัก</div>
       </footer>
 
       {selectedListing && (
