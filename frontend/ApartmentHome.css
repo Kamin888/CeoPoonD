@@ -183,8 +183,8 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .room-status-occupied{background:#fff0e8;color:#9b4b22}
 .ah .danger-button{border:1px solid #efb4b1;border-radius:8px;background:#fff2f1;color:#a12c27;padding:9px 14px;font:600 14px inherit;font-family:inherit;cursor:pointer}
 .ah .admin-listings-table .admin-actions-menu{position:relative;display:grid;justify-items:center;gap:4px;width:100%}
-.ah .admin-actions-menu-items{position:absolute;top:calc(100% + 4px);left:0;z-index:10;display:grid;gap:4px;width:100%;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);box-shadow:0 6px 16px #0002}
-.ah .admin-listings-table .admin-actions-menu-item{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;min-width:0;min-height:32px;padding:6px 8px;font-size:12px;text-align:left;white-space:normal}
+.ah .admin-actions-menu-items{position:absolute;top:calc(100% + 4px);left:auto;right:calc(50% - 16px);z-index:10;display:grid;gap:4px;width:max-content;min-width:100%;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);box-shadow:0 6px 16px #0002}
+.ah .admin-listings-table .admin-actions-menu-item{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;min-width:0;min-height:32px;padding:6px 8px;font-size:12px;text-align:left;white-space:nowrap}
 .ah .admin-actions-menu-item svg{flex:0 0 16px}
 .ah .admin-actions-menu-item.danger-button{border-color:var(--line);background:var(--surface);color:#a12c27}
 .ah .admin-pagination{display:flex;justify-content:center;align-items:center;gap:12px;padding:14px 0}

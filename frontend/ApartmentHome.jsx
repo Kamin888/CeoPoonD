@@ -214,6 +214,7 @@ export default function ApartmentHome() {
   const [trashError, setTrashError] = useState("");
   const [adminSection, setAdminSection] = useState("all");
   const [adminPage, setAdminPage] = useState(1);
+  const [trashPage, setTrashPage] = useState(1);
   const [adminRoomStatusFilter, setAdminRoomStatusFilter] = useState("all");
   const [adminMinPriceFilter, setAdminMinPriceFilter] = useState("");
   const [adminMaxPriceFilter, setAdminMaxPriceFilter] = useState("");
@@ -282,6 +283,12 @@ export default function ApartmentHome() {
   const paginatedAdminListings = filteredAdminListings.slice(
     (currentAdminPage - 1) * LISTINGS_PER_PAGE,
     currentAdminPage * LISTINGS_PER_PAGE
+  );
+  const totalTrashPages = Math.ceil(trashedListings.length / LISTINGS_PER_PAGE);
+  const currentTrashPage = Math.min(trashPage, Math.max(totalTrashPages, 1));
+  const paginatedTrashListings = trashedListings.slice(
+    (currentTrashPage - 1) * LISTINGS_PER_PAGE,
+    currentTrashPage * LISTINGS_PER_PAGE
   );
 
   const goDashboard = () => {
@@ -950,7 +957,7 @@ export default function ApartmentHome() {
                   )}
                 </div>
               )}
-              {totalAdminPages > 1 && (
+              {totalAdminPages > 0 && (
                 <nav className="admin-pagination" aria-label="การแบ่งหน้า">
                   <button
                     className="secondary-button"
@@ -1000,7 +1007,7 @@ export default function ApartmentHome() {
                         </tr>
                       </thead>
                       <tbody>
-                        {trashedListings.map((listing) => (
+                        {paginatedTrashListings.map((listing) => (
                           <tr key={listing.id}>
                             <td><span className="admin-project-code">{formatListingCode(listing.id, listingCodePrefix)}</span></td>
                             <th scope="row">
@@ -1025,13 +1032,55 @@ export default function ApartmentHome() {
                             <td>{listing.details?.listingType === "sale" ? "—" : `${formatNumber(listing.price, language)} บาท`}</td>
                             <td>{listing.details?.listingType === "sale" ? `${formatNumber(listing.price, language)} บาท` : "—"}</td>
                             <td>
-                              <span className="status-badge">ถังขยะ</span>
                               <div className="admin-table-timestamp">ลบถาวรวันที่ {new Date(listing.expires_at).toLocaleString(language === "en" ? "en-US" : "th-TH")}</div>
                             </td>
                             <td>
                               <div className="admin-manage-actions">
-                                <button className="secondary-button" onClick={() => restoreAdminListing(listing)}>กู้คืน</button>
-                                <button className="danger-button" onClick={() => permanentlyDeleteAdminListing(listing)}>ลบถาวร</button>
+                                <div className="admin-actions-menu">
+                                  <button
+                                    className="secondary-button admin-icon-button admin-edit-icon-button"
+                                    type="button"
+                                    aria-label={`เปิดเมนูจัดการ ${listing.name}`}
+                                    aria-expanded={openAdminActionMenuId === listing.id}
+                                    aria-controls={`admin-actions-${listing.id}`}
+                                    title="เมนูจัดการ"
+                                    onClick={() => setOpenAdminActionMenuId((openId) => openId === listing.id ? null : listing.id)}
+                                  >
+                                    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                                      <path d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                  </button>
+                                  {openAdminActionMenuId === listing.id && (
+                                    <div className="admin-actions-menu-items" id={`admin-actions-${listing.id}`}>
+                                      <button
+                                        className="secondary-button admin-actions-menu-item"
+                                        type="button"
+                                        onClick={() => {
+                                          setOpenAdminActionMenuId(null);
+                                          restoreAdminListing(listing);
+                                        }}
+                                      >
+                                        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                                          <path d="M3 12a9 9 0 1 0 2.64-6.36L3 8m0-5v5h5m4-1v5l3 2" />
+                                        </svg>
+                                        <span>กู้คืน</span>
+                                      </button>
+                                      <button
+                                        className="danger-button admin-actions-menu-item"
+                                        type="button"
+                                        onClick={() => {
+                                          setOpenAdminActionMenuId(null);
+                                          permanentlyDeleteAdminListing(listing);
+                                        }}
+                                      >
+                                        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                                          <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 5v5m4-5v5" />
+                                        </svg>
+                                        <span>ลบถาวร</span>
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </td>
                           </tr>
@@ -1039,6 +1088,25 @@ export default function ApartmentHome() {
                       </tbody>
                     </table>
                   </div>
+                )}
+                {!trashError && totalTrashPages > 0 && (
+                  <nav className="admin-pagination" aria-label="การแบ่งหน้า">
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      aria-label="หน้าก่อนหน้า"
+                      onClick={() => setTrashPage(currentTrashPage - 1)}
+                      disabled={currentTrashPage === 1}
+                    >ก่อนหน้า</button>
+                    <span>{t(`หน้า ${currentTrashPage} จาก ${totalTrashPages}`)}</span>
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      aria-label="หน้าถัดไป"
+                      onClick={() => setTrashPage(currentTrashPage + 1)}
+                      disabled={currentTrashPage === totalTrashPages}
+                    >ถัดไป</button>
+                  </nav>
                 )}
               </section>
             )}
