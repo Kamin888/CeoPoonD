@@ -300,13 +300,30 @@ function validateListingInput(body) {
   const available = body.available ?? false;
   const transit = body.transit ?? false;
   const pets = body.pets ?? false;
+  const roomStatus = body.room_status;
   if (typeof available !== "boolean" || typeof transit !== "boolean" || typeof pets !== "boolean") {
     return { error: "ข้อมูลสถานะห้องว่าง การเดินทาง และการเลี้ยงสัตว์ไม่ถูกต้อง" };
+  }
+  if (roomStatus !== undefined && !["vacant", "occupied"].includes(roomStatus)) {
+    return { error: "สถานะผู้เช่าไม่ถูกต้อง" };
+  }
+  const tenantContractEndDate = body.tenantContractEndDate;
+  const parsedTenantContractEndDate = typeof tenantContractEndDate === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/.test(tenantContractEndDate)
+    ? Date.parse(`${tenantContractEndDate}T00:00:00.000Z`)
+    : Number.NaN;
+  const validTenantContractEndDate = Number.isFinite(parsedTenantContractEndDate) &&
+    new Date(parsedTenantContractEndDate).toISOString().slice(0, 10) === tenantContractEndDate;
+  if (tenantContractEndDate && !validTenantContractEndDate) {
+    return { error: "วันหมดสัญญาเช่าไม่ถูกต้อง" };
+  }
+  if (status === "pending_review" && roomStatus === "occupied" && !validTenantContractEndDate) {
+    return { error: "กรุณาระบุวันหมดสัญญาเช่าของผู้เช่า" };
   }
 
   const details = Object.fromEntries(
     Object.entries(body).filter(([key]) =>
-      !["name", "area", "price", "available", "transit", "pets", "status"].includes(key)
+      !["name", "area", "price", "available", "transit", "pets", "room_status", "status"].includes(key)
     )
   );
   const images = details.images ?? [];
@@ -368,35 +385,36 @@ function validateListingInput(body) {
     }
   }
 
-  return { name, area, price, available, transit, pets, status, details };
+  return { name, area, price, available, transit, pets, room_status: roomStatus, status, details };
 }
 
 async function saveListing(request, response, next, update = false) {
   try {
     const listing = validateListingInput(request.body);
     if (listing.error) return response.status(400).json({ error: listing.error });
-    const { name, area, price, available, transit, pets, status, details } = listing;
+    const { name, area, price, available, transit, room_status: roomStatus, pets, status, details } = listing;
     if (update) {
       const { rows } = await pool.query(
         `UPDATE listings
          SET name = $1, area = $2, price = $3, available = $4, transit = $5, pets = $6,
-             status = $7, details = $8, updated_at = NOW(), reviewed_by = NULL, reviewed_at = NULL
-         WHERE id = $9 AND owner_id = $10 AND deleted_at IS NULL
+             room_status = COALESCE($7, room_status), status = $8, details = $9,
+             updated_at = NOW(), reviewed_by = NULL, reviewed_at = NULL
+         WHERE id = $10 AND owner_id = $11 AND deleted_at IS NULL
            AND (
-             (status = 'draft' AND $7 IN ('draft', 'pending_review'))
-             OR (status IN ('published', 'closed') AND $7 = 'pending_review')
+             (status = 'draft' AND $8 IN ('draft', 'pending_review'))
+             OR (status IN ('published', 'closed') AND $8 = 'pending_review')
            )
-         RETURNING id, name, area, price, available, transit, pets, status, details`,
-        [name, area, price, available, transit, pets, status, details, request.params.id, request.userId]
+         RETURNING id, name, area, price, available, transit, pets, room_status, status, details`,
+        [name, area, price, available, transit, pets, roomStatus ?? null, status, details, request.params.id, request.userId]
       );
       if (!rows[0]) return response.status(404).json({ error: "ไม่พบประกาศของคุณที่แก้ไขได้ หรือสถานะไม่อนุญาตให้แก้ไข" });
       return response.json({ data: rows[0] });
     }
     const { rows } = await pool.query(
-      `INSERT INTO listings (slug, name, area, price, available, transit, pets, owner_id, status, details)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       RETURNING id, name, area, price, available, transit, pets, status, details`,
-      [randomUUID(), name, area, price, available, transit, pets, request.userId, status, details]
+      `INSERT INTO listings (slug, name, area, price, available, transit, pets, owner_id, room_status, status, details)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       RETURNING id, name, area, price, available, transit, pets, room_status, status, details`,
+      [randomUUID(), name, area, price, available, transit, pets, request.userId, roomStatus ?? "vacant", status, details]
     );
     response.status(201).json({ data: rows[0] });
   } catch (error) {
@@ -452,14 +470,15 @@ app.put("/api/admin/listings/:id", requireTrustedOrigin, requireAuth, requireAdm
   try {
     const listing = validateListingInput(request.body);
     if (listing.error) return response.status(400).json({ error: listing.error });
-    const { name, area, price, available, transit, pets, status, details } = listing;
+    const { name, area, price, available, transit, room_status: roomStatus, pets, status, details } = listing;
     const { rows } = await pool.query(
       `UPDATE listings
        SET name = $1, area = $2, price = $3, available = $4, transit = $5, pets = $6,
-           status = $7, details = $8, updated_at = NOW(), reviewed_by = NULL, reviewed_at = NULL
-       WHERE id = $9 AND deleted_at IS NULL
-       RETURNING id, name, area, price, available, transit, pets, status, details`,
-      [name, area, price, available, transit, pets, status, details, request.params.id]
+           room_status = COALESCE($7, room_status), status = $8, details = $9,
+           updated_at = NOW(), reviewed_by = NULL, reviewed_at = NULL
+       WHERE id = $10 AND deleted_at IS NULL
+       RETURNING id, name, area, price, available, transit, pets, room_status, status, details`,
+      [name, area, price, available, transit, pets, roomStatus ?? null, status, details, request.params.id]
     );
     if (!rows[0]) return response.status(404).json({ error: "ไม่พบประกาศที่ต้องการแก้ไข" });
     response.json({ data: rows[0] });

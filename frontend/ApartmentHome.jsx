@@ -1,15 +1,9 @@
 import React, { useEffect, useState } from "react";
 import "./ApartmentHome.css";
+import { Localized, translateText } from "./i18n.js";
 import AuthScreen from "./components/AuthScreen.jsx";
 import AdminReviewModal from "./components/AdminReviewModal.jsx";
-import ListingCard from "./components/ListingCard.jsx";
 import ListingDetailsModal from "./components/ListingDetailsModal.jsx";
-
-const FILTERS = [
-  { key: "transit", label: "ใกล้ BTS/MRT" },
-  { key: "maxPrice", label: "ไม่เกิน 5,000 บาท" },
-  { key: "pets", label: "อนุญาตเลี้ยงสัตว์" },
-];
 
 const EMPTY_LISTING = {
   listingType: "rent",
@@ -30,6 +24,7 @@ const EMPTY_LISTING = {
   deposit: "",
   advanceRent: "",
   minContract: "",
+  tenantContractEndDate: "",
   availableDate: "",
   furnished: "none",
   appliances: [],
@@ -64,17 +59,21 @@ function getLocalDateString() {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-function formatListingTimestamp(value) {
-  if (!value) return "ไม่ระบุ";
+function formatListingTimestamp(value, language) {
+  if (!value) return translateText(language, "ไม่ระบุ");
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "ไม่ระบุ";
-  return date.toLocaleString("th-TH", {
+  if (Number.isNaN(date.getTime())) return translateText(language, "ไม่ระบุ");
+  return date.toLocaleString(language === "en" ? "en-US" : "th-TH", {
     year: "numeric",
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatNumber(value, language) {
+  return Number(value).toLocaleString(language === "en" ? "en-US" : "th-TH");
 }
 
 function escapeXml(value) {
@@ -87,19 +86,19 @@ function escapeXml(value) {
     .replace(/'/g, "&apos;");
 }
 
-function createListingsExcelXml(listings) {
+function createListingsExcelXml(listings, language) {
   const columns = [
     ["รหัสประกาศ", (listing) => listing.id],
-    ["สถานะ", (listing) => STATUS_LABELS[listing.status] || listing.status],
-    ["สถานะห้อง", (listing) => ROOM_STATUS_LABELS[listing.room_status] || "ว่าง"],
-    ["ประเภทประกาศ", (listing) => listing.details?.listingType === "sale" ? "ขาย" : "ให้เช่า"],
-    ["ชื่อประกาศ", (listing) => listing.name],
+    ["สถานะ", (listing) => translateText(language, STATUS_LABELS[listing.status] || listing.status)],
+    ["สถานะผู้เช่า", (listing) => translateText(language, ROOM_STATUS_LABELS[listing.room_status] || "ว่าง")],
+    ["ประเภทประกาศ", (listing) => translateText(language, listing.details?.listingType === "sale" ? "ขาย" : "ให้เช่า")],
+    ["ชื่อโครงการ", (listing) => listing.name],
     ["ประเภททรัพย์", (listing) => ({
-      condo: "คอนโด",
-      apartment: "อพาร์ตเมนต์",
-      house: "บ้าน",
-      townhome: "ทาวน์โฮม",
-      land: "ที่ดิน",
+      condo: translateText(language, "คอนโด"),
+      apartment: translateText(language, "อพาร์ตเมนต์"),
+      house: translateText(language, "บ้าน"),
+      townhome: translateText(language, "ทาวน์โฮม"),
+      land: translateText(language, "ที่ดิน"),
       other: listing.details?.otherPropertyType,
     }[listing.details?.propertyType] || listing.details?.otherPropertyType || "")],
     ["ชื่อโครงการ", (listing) => listing.details?.projectName],
@@ -118,20 +117,21 @@ function createListingsExcelXml(listings) {
     ["เงินประกัน (บาท)", (listing) => listing.details?.deposit],
     ["ค่าเช่าล่วงหน้า (เดือน)", (listing) => listing.details?.advanceRent],
     ["สัญญาขั้นต่ำ (เดือน)", (listing) => listing.details?.minContract],
+    ["วันหมดสัญญาเช่า", (listing) => listing.details?.tenantContractEndDate],
     ["วันที่พร้อมเข้าอยู่/ขาย", (listing) => listing.details?.availableDate],
     ["เฟอร์นิเจอร์", (listing) => ({
-      none: "ไม่มี",
-      partial: "บางส่วน",
-      fully: "ครบ",
+      none: translateText(language, "ไม่มี"),
+      partial: translateText(language, "บางส่วน"),
+      fully: translateText(language, "ครบ"),
     }[listing.details?.furnished] || listing.details?.furnished)],
-    ["เครื่องใช้ไฟฟ้า", (listing) => listing.details?.appliances?.join(", ")],
-    ["สิ่งอำนวยความสะดวก", (listing) => listing.details?.facilities?.join(", ")],
-    ["เลี้ยงสัตว์", (listing) => (listing.details?.pets ?? listing.pets) ? "อนุญาต" : "ไม่อนุญาต"],
-    ["ใกล้ BTS/MRT", (listing) => (listing.details?.transit ?? listing.transit) ? "ใช่" : "ไม่ใช่"],
+    ["เครื่องใช้ไฟฟ้า", (listing) => listing.details?.appliances?.map((item) => translateText(language, item)).join(", ")],
+    ["สิ่งอำนวยความสะดวก", (listing) => listing.details?.facilities?.map((item) => translateText(language, item)).join(", ")],
+    ["เลี้ยงสัตว์", (listing) => translateText(language, (listing.details?.pets ?? listing.pets) ? "อนุญาต" : "ไม่อนุญาต")],
+    ["ใกล้ BTS/MRT", (listing) => translateText(language, (listing.details?.transit ?? listing.transit) ? "ใช่" : "ไม่ใช่")],
     ["รายละเอียด", (listing) => listing.details?.description],
     ["จุดเด่น", (listing) => listing.details?.highlights?.join(", ")],
     ["รูปภาพ", (listing) => (listing.details?.images || []).map((image, index) =>
-      image.startsWith("data:") ? `รูปที่ ${index + 1} (แนบในระบบ)` : image
+      image.startsWith("data:") ? translateText(language, `รูปที่ ${index + 1} (แนบในระบบ)`) : image
     ).join("\n")],
     ["ชื่อผู้ติดต่อ", (listing) => listing.details?.contactName],
     ["เบอร์โทร", (listing) => listing.details?.contactPhone],
@@ -143,7 +143,7 @@ function createListingsExcelXml(listings) {
   ];
   const cell = (value, style = "") =>
     `<Cell${style ? ` ss:StyleID="${style}"` : ""}><Data ss:Type="String">${escapeXml(value)}</Data></Cell>`;
-  const headerRow = `<Row>${columns.map(([label]) => cell(label, "Header")).join("")}</Row>`;
+  const headerRow = `<Row>${columns.map(([label]) => cell(translateText(language, label), "Header")).join("")}</Row>`;
   const dataRows = listings.map((listing) =>
     `<Row>${columns.map(([, getValue]) => cell(getValue(listing))).join("")}</Row>`
   ).join("");
@@ -152,29 +152,21 @@ function createListingsExcelXml(listings) {
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
   <Styles><Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#DCE8DF" ss:Pattern="Solid"/></Style></Styles>
-  <Worksheet ss:Name="ประกาศทั้งหมด"><Table>${headerRow}${dataRows}</Table></Worksheet>
+  <Worksheet ss:Name="${translateText(language, "ข้อมูลโครงการ")}"><Table>${headerRow}${dataRows}</Table></Worksheet>
 </Workbook>`;
 }
 
 export default function ApartmentHome() {
-  const [query, setQuery] = useState("");
-  const [submitted, setSubmitted] = useState("");
-  const [active, setActive] = useState([]);
-  const [searchActive, setSearchActive] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [listings, setListings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [authMode, setAuthMode] = useState(null);
-  const [authForm, setAuthForm] = useState({ email: "", password: "", confirmPassword: "" });
+  const [language, setLanguage] = useState("th");
+  const [authForm, setAuthForm] = useState({ email: "", password: "" });
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [session, setSession] = useState(null);
-  const [pendingListing, setPendingListing] = useState(false);
   const [notice, setNotice] = useState("");
   const [listingMode, setListingMode] = useState(false);
   const [listingForm, setListingForm] = useState(EMPTY_LISTING);
   const [listingId, setListingId] = useState(null);
+  const [listingRoomStatus, setListingRoomStatus] = useState("vacant");
   const [listingEditStatus, setListingEditStatus] = useState(null);
   const [adminEditingListing, setAdminEditingListing] = useState(false);
   const [listingStep, setListingStep] = useState(0);
@@ -182,15 +174,13 @@ export default function ApartmentHome() {
   const [listingError, setListingError] = useState("");
   const [listingLoading, setListingLoading] = useState(false);
   const [listingRefresh, setListingRefresh] = useState(0);
-  const [myListings, setMyListings] = useState([]);
-  const [myListingsError, setMyListingsError] = useState("");
   const [pendingReviews, setPendingReviews] = useState([]);
   const [adminListings, setAdminListings] = useState([]);
   const [adminListingsError, setAdminListingsError] = useState("");
   const [adminExportError, setAdminExportError] = useState("");
   const [trashedListings, setTrashedListings] = useState([]);
   const [trashError, setTrashError] = useState("");
-  const [adminSection, setAdminSection] = useState("pending");
+  const [adminSection, setAdminSection] = useState("all");
   const [adminRoomStatusFilter, setAdminRoomStatusFilter] = useState("all");
   const [adminMinPriceFilter, setAdminMinPriceFilter] = useState("");
   const [adminMaxPriceFilter, setAdminMaxPriceFilter] = useState("");
@@ -199,13 +189,18 @@ export default function ApartmentHome() {
   const [reviewError, setReviewError] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
   const [approvingListingId, setApprovingListingId] = useState(null);
-  const [adminDashboard, setAdminDashboard] = useState(false);
+  const [adminDashboard, setAdminDashboard] = useState(true);
   const [selectedListing, setSelectedListing] = useState(null);
   const [pendingReviewListing, setPendingReviewListing] = useState(null);
   const [detailImageIndex, setDetailImageIndex] = useState(0);
 
-  const toggle = (key) =>
-    setActive((a) => (a.includes(key) ? a.filter((k) => k !== key) : [...a, key]));
+  const toggleLanguage = () => setLanguage((current) => current === "th" ? "en" : "th");
+  const t = (text) => translateText(language, text);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.title = language === "en" ? "Finzhome Admin Dashboard" : "Finzhome แดชบอร์ดผู้ดูแล";
+  }, [language]);
 
   const normalizedAdminNameFilter = adminNameFilter.trim().toLocaleLowerCase();
   const visibleAdminListings = adminListings.filter((listing) => listing.status !== "pending_review");
@@ -219,37 +214,11 @@ export default function ApartmentHome() {
     return matchesName && matchesRoomStatus && matchesMinPrice && matchesMaxPrice;
   });
 
-  const submitSearch = () => {
-    setSubmitted(query.trim());
-    setSearchActive(true);
-    setFiltersOpen(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const showFilteredResults = () => {
-    setSearchActive(true);
-    setFiltersOpen(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const openAuth = (mode) => {
-    setAuthMode(mode);
-    setAuthForm({ email: "", password: "", confirmPassword: "" });
-    setAuthError("");
-  };
-
-  const goHome = () => {
-    setAdminDashboard(false);
+  const goDashboard = () => {
+    setAdminDashboard(true);
     setListingMode(false);
-    setAuthMode(null);
-    setPendingListing(false);
     setSelectedListing(null);
     setNotice("");
-    setQuery("");
-    setSubmitted("");
-    setActive([]);
-    setSearchActive(false);
-    setFiltersOpen(false);
   };
 
   const openListingDetails = (listing) => {
@@ -274,35 +243,13 @@ export default function ApartmentHome() {
     };
   }, [selectedListing, pendingReviewListing]);
 
-  const startListing = () => {
-    setNotice("");
-    if (session) {
-      setListingError("");
-      setListingForm({ ...EMPTY_LISTING });
-      setListingId(null);
-      setListingEditStatus(null);
-      setAdminEditingListing(false);
-      setListingStep(0);
-      setValidationErrors([]);
-      setListingMode(true);
-      return;
-    }
-    setPendingListing(true);
-    openAuth("register");
-  };
-
   const submitAuth = async (event) => {
     event.preventDefault();
     setAuthError("");
-    if (authMode === "register" && authForm.password !== authForm.confirmPassword) {
-      setAuthError("รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน");
-      return;
-    }
-
     setAuthLoading(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "";
-      const response = await fetch(`${apiUrl}/api/auth/${authMode}`, {
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -314,15 +261,7 @@ export default function ApartmentHome() {
       }
 
       setSession(result.user);
-      setAuthMode(null);
-      if (pendingListing) {
-        setListingError("");
-        setListingMode(true);
-        setNotice("");
-        setPendingListing(false);
-      } else {
-        setNotice(authMode === "register" ? "สมัครสมาชิกสำเร็จ" : "เข้าสู่ระบบสำเร็จ");
-      }
+      setNotice("เข้าสู่ระบบสำเร็จ");
     } catch (requestError) {
       setAuthError(requestError.message || "ไม่สามารถเชื่อมต่อระบบได้");
     } finally {
@@ -386,6 +325,9 @@ export default function ApartmentHome() {
       errors.push("กรุณากรอกราคาที่ถูกต้องและมากกว่า 0 บาท");
     }
     if (!listingForm.areaSqm || Number(listingForm.areaSqm) <= 0) errors.push("กรุณากรอกพื้นที่ใช้สอย");
+    if (listingRoomStatus === "occupied" && !listingForm.tenantContractEndDate) {
+      errors.push("กรุณาระบุวันหมดสัญญาเช่าของผู้เช่า");
+    }
     if (!listingForm.availableDate) errors.push("กรุณาระบุวันที่พร้อมเข้าอยู่หรือพร้อมขาย");
     if (!listingForm.images.length) errors.push("กรุณาอัปโหลดรูปภาพจริงของทรัพย์อย่างน้อย 1 รูป");
     if (!listingForm.contactName.trim()) errors.push("กรุณากรอกชื่อผู้ติดต่อ");
@@ -412,6 +354,7 @@ export default function ApartmentHome() {
       const apiUrl = import.meta.env.VITE_API_URL || "";
       const payload = {
         ...listingForm,
+        room_status: listingRoomStatus,
         status,
         price: listingForm.price ? Number(listingForm.price) : 0,
         name: listingForm.projectName.trim() || "ประกาศฉบับร่าง",
@@ -462,71 +405,6 @@ export default function ApartmentHome() {
   };
 
   useEffect(() => {
-    const controller = new AbortController();
-    const params = new URLSearchParams();
-    if (submitted.trim()) params.set("search", submitted.trim());
-    if (active.includes("transit")) params.set("transit", "true");
-    if (active.includes("maxPrice")) params.set("maxPrice", "5000");
-    if (active.includes("pets")) params.set("pets", "true");
-
-    async function loadListings() {
-      setLoading(true);
-      setError("");
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || "";
-        const response = await fetch(`${apiUrl}/api/listings?${params}`, {
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          throw new Error(`โหลดรายการห้องพักไม่สำเร็จ (${response.status})`);
-        }
-        const result = await response.json();
-        if (!Array.isArray(result.data)) {
-          throw new Error("รูปแบบข้อมูลจากเซิร์ฟเวอร์ไม่ถูกต้อง");
-        }
-        setListings(result.data);
-      } catch (requestError) {
-        if (requestError.name !== "AbortError") {
-          setError(requestError.message || "ไม่สามารถเชื่อมต่อระบบค้นหาได้");
-        }
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    }
-
-    loadListings();
-    return () => controller.abort();
-  }, [submitted, active, listingRefresh]);
-
-  useEffect(() => {
-    if (!session) {
-      setMyListings([]);
-      setMyListingsError("");
-      return;
-    }
-    const controller = new AbortController();
-    async function loadMyListings() {
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || "";
-        const response = await fetch(`${apiUrl}/api/my-listings`, {
-          credentials: "include",
-          signal: controller.signal,
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "โหลดประกาศของคุณไม่สำเร็จ");
-        setMyListings(result.data);
-        setMyListingsError("");
-      } catch (requestError) {
-        if (requestError.name !== "AbortError") {
-          setMyListingsError(requestError.message || "ไม่สามารถเชื่อมต่อระบบได้");
-        }
-      }
-    }
-    loadMyListings();
-    return () => controller.abort();
-  }, [session, listingRefresh]);
-
-  useEffect(() => {
     if (session?.role !== "admin") {
       setAdminListings([]);
       setAdminListingsError("");
@@ -543,7 +421,7 @@ export default function ApartmentHome() {
           signal: controller.signal,
         });
         const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "โหลดรายการประกาศทั้งหมดไม่สำเร็จ");
+        if (!response.ok) throw new Error(result.error || "โหลดข้อมูลโครงการไม่สำเร็จ");
         setAdminListings(result.data);
         setAdminListingsError("");
       } catch (requestError) {
@@ -614,7 +492,7 @@ export default function ApartmentHome() {
 
   const approveListing = async (id) => {
     const listing = pendingReviews.find((item) => item.id === id);
-    if (!window.confirm(`ยืนยันอนุมัติ “${listing?.name || "ประกาศนี้"}” และเผยแพร่ต่อสาธารณะหรือไม่?`)) {
+    if (!window.confirm(t(`ยืนยันอนุมัติ “${listing?.name || "ประกาศนี้"}” และเผยแพร่ต่อสาธารณะหรือไม่?`))) {
       return;
     }
     setApprovingListingId(id);
@@ -635,24 +513,6 @@ export default function ApartmentHome() {
       setReviewError(requestError.message || "ไม่สามารถเชื่อมต่อระบบตรวจสอบได้");
     } finally {
       setApprovingListingId(null);
-    }
-  };
-
-  const updateListingStatus = async (id, status) => {
-    setMyListingsError("");
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || "";
-      const response = await fetch(`${apiUrl}/api/listings/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ status }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "เปลี่ยนสถานะประกาศไม่สำเร็จ");
-      setListingRefresh((count) => count + 1);
-    } catch (requestError) {
-      setMyListingsError(requestError.message || "ไม่สามารถเชื่อมต่อระบบได้");
     }
   };
 
@@ -677,19 +537,9 @@ export default function ApartmentHome() {
     }
   };
 
-  const editOwnListing = (listing) => {
-    setListingId(listing.id);
-    setListingEditStatus(listing.status);
-    setAdminEditingListing(false);
-    setListingForm({ ...EMPTY_LISTING, ...(listing.details || {}) });
-    setListingStep(0);
-    setValidationErrors([]);
-    setListingError("");
-    setListingMode(true);
-  };
-
   const editAdminListing = (listing) => {
     setListingId(listing.id);
+    setListingRoomStatus(listing.room_status || "vacant");
     setListingEditStatus(listing.status);
     setAdminEditingListing(true);
     setListingForm({ ...EMPTY_LISTING, ...(listing.details || {}) });
@@ -700,8 +550,21 @@ export default function ApartmentHome() {
     setListingMode(true);
   };
 
+  const createAdminListing = () => {
+    setListingId(null);
+    setListingRoomStatus("vacant");
+    setListingEditStatus(null);
+    setAdminEditingListing(true);
+    setListingForm({ ...EMPTY_LISTING });
+    setListingStep(0);
+    setValidationErrors([]);
+    setListingError("");
+    setAdminDashboard(false);
+    setListingMode(true);
+  };
+
   const deleteAdminListing = async (listing) => {
-    if (!window.confirm(`ย้ายประกาศ “${listing.name}” ของ ${listing.owner_email || "บัญชีเดิม"} ไปถังขยะหรือไม่? ระบบจะลบถาวรหลัง 15 วัน`)) {
+    if (!window.confirm(t(`ย้ายประกาศ “${listing.name}” ของ ${listing.owner_email || "บัญชีเดิม"} ไปถังขยะหรือไม่? ระบบจะลบถาวรหลัง 15 วัน`))) {
       return;
     }
     setAdminListingsError("");
@@ -739,7 +602,7 @@ export default function ApartmentHome() {
   };
 
   const permanentlyDeleteAdminListing = async (listing) => {
-    if (!window.confirm(`ลบประกาศ “${listing.name}” ถาวรทันที? การดำเนินการนี้ย้อนกลับไม่ได้`)) return;
+    if (!window.confirm(t(`ลบประกาศ “${listing.name}” ถาวรทันที? การดำเนินการนี้ย้อนกลับไม่ได้`))) return;
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(`${apiUrl}/api/admin/listings/${listing.id}/permanent`, {
@@ -760,7 +623,7 @@ export default function ApartmentHome() {
   const exportAdminListings = () => {
     setAdminExportError("");
     try {
-      const workbook = createListingsExcelXml(filteredAdminListings);
+      const workbook = createListingsExcelXml(filteredAdminListings, language);
       const blob = new Blob(["\uFEFF", workbook], { type: "application/vnd.ms-excel;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -778,20 +641,21 @@ export default function ApartmentHome() {
 
   if (adminDashboard && session?.role === "admin") {
     return (
+      <Localized language={language}>
       <div className={`ah${adminSection === "all" || adminSection === "pending" || adminSection === "trash" ? " admin-table-view" : ""}`}>
         <div className="wrap admin-dashboard">
           <header>
-            <button className="logo logo-button" type="button" onClick={goHome} aria-label="Finzhome ไปหน้าหลัก">Finzhome<small> ADMIN</small></button>
+            <button className="logo logo-button" type="button" onClick={goDashboard} aria-label="Finzhome แดชบอร์ด">Finzhome<small> ADMIN</small></button>
             <nav>
               <span className="user-email">{session.email}</span>
-              <button className="nav-link" onClick={() => setAdminDashboard(false)}>กลับหน้าเว็บไซต์</button>
+              <button className="nav-link" type="button" onClick={toggleLanguage}>{language === "th" ? "English" : "ไทย"}</button>
               <button className="nav-link" onClick={logout}>ออกจากระบบ</button>
             </nav>
           </header>
           <main>
             <section className="admin-dashboard-heading">
               <span className="eyebrow">ADMIN DASHBOARD</span>
-              <h1>{adminSection === "pending" ? "รอตรวจสอบ" : adminSection === "trash" ? "ถังขยะ" : "ประกาศทั้งหมด"}</h1>
+              <h1>{adminSection === "pending" ? "รอตรวจสอบ" : adminSection === "trash" ? "ถังขยะ" : "ข้อมูลโครงการ"}</h1>
               <p>{adminSection === "pending"
                 ? "ตรวจรายละเอียดและรูปภาพก่อนยืนยันเผยแพร่"
                 : adminSection === "trash"
@@ -801,14 +665,14 @@ export default function ApartmentHome() {
             <div className="admin-dashboard-grid">
               <aside className="admin-sidebar" aria-label="หมวดหมู่แดชบอร์ด">
                 <span className="admin-sidebar-label">จัดการประกาศ</span>
-                <button className={adminSection === "pending" ? "active" : ""} onClick={() => setAdminSection("pending")}>
-                  <span>รอตรวจสอบ</span><strong>{pendingReviews.length}</strong>
-                </button>
                 <button className={adminSection === "all" ? "active" : ""} onClick={() => setAdminSection("all")}>
-                  <span>ประกาศทั้งหมด</span><strong>{visibleAdminListings.length}</strong>
+                  <span>ข้อมูลโครงการ</span><strong>{visibleAdminListings.length}</strong>
                 </button>
                 <button className={adminSection === "trash" ? "active" : ""} onClick={() => setAdminSection("trash")}>
                   <span>ถังขยะ</span><strong>{trashedListings.length}</strong>
+                </button>
+                <button className={adminSection === "pending" ? "active" : ""} onClick={() => setAdminSection("pending")}>
+                  <span>รอตรวจสอบ</span><strong>{pendingReviews.length}</strong>
                 </button>
               </aside>
               <div className="admin-dashboard-content">
@@ -835,7 +699,7 @@ export default function ApartmentHome() {
                   <table className="admin-listings-table">
                     <thead>
                       <tr>
-                        <th scope="col">ชื่อ</th>
+                        <th scope="col">ชื่อโครงการ</th>
                         <th scope="col">ราคา</th>
                         <th scope="col">สถานะ</th>
                         <th scope="col">จัดการ</th>
@@ -864,7 +728,7 @@ export default function ApartmentHome() {
                                 </div>
                               </div>
                             </th>
-                            <td>{listing.price.toLocaleString("th-TH")} บาท{details.listingType === "sale" ? "" : "/เดือน"}</td>
+                            <td>{formatNumber(listing.price, language)} บาท{details.listingType === "sale" ? "" : "/เดือน"}</td>
                             <td><span className="status-badge status-pending_review">รอตรวจสอบ</span></td>
                             <td>
                               <button
@@ -883,7 +747,7 @@ export default function ApartmentHome() {
                 </div>
               </section>
             ) : null}
-            {adminSection === "all" && <section className="admin-manage-all" aria-label="ประกาศทั้งหมด">
+            {adminSection === "all" && <section className="admin-manage-all" aria-label="ข้อมูลโครงการ">
               <div className="admin-manage-heading">
                 <div className="admin-manage-heading-actions">
                   <span className="status-badge">{filteredAdminListings.length} / {visibleAdminListings.length} รายการ</span>
@@ -895,13 +759,20 @@ export default function ApartmentHome() {
                   >
                     <span aria-hidden="true">↓</span> ดาวน์โหลด Excel
                   </button>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={createAdminListing}
+                  >
+                    ลงข้อมูล
+                  </button>
                 </div>
               </div>
               {adminListingsError && <p className="form-error" role="alert">{adminListingsError}</p>}
               {adminExportError && <p className="form-error" role="alert">{adminExportError}</p>}
               <div className="admin-listing-filters" aria-label="ตัวกรองประกาศ">
                 <label>
-                  ชื่อประกาศ
+                  ชื่อโครงการ
                   <input
                     type="search"
                     value={adminNameFilter}
@@ -984,12 +855,12 @@ export default function ApartmentHome() {
                                     aria-haspopup="dialog"
                                     onClick={() => openListingDetails(listing)}
                                   >{listing.name}</button>
-                                  <div className="admin-table-timestamp">ลงประกาศ: {formatListingTimestamp(listing.created_at)}</div>
-                                  <div className="admin-table-timestamp">แก้ไขล่าสุด: {formatListingTimestamp(listing.updated_at)}</div>
+                                  <div className="admin-table-timestamp">ลงประกาศ: {formatListingTimestamp(listing.created_at, language)}</div>
+                                  <div className="admin-table-timestamp">แก้ไขล่าสุด: {formatListingTimestamp(listing.updated_at, language)}</div>
                                 </div>
                               </div>
                             </th>
-                            <td>{listing.price.toLocaleString("th-TH")} บาท</td>
+                            <td>{formatNumber(listing.price, language)} บาท</td>
                             <td>
                               <label className="admin-room-status">
                                 <select
@@ -1066,10 +937,10 @@ export default function ApartmentHome() {
                                 </div>
                               </div>
                             </th>
-                            <td>{listing.price.toLocaleString("th-TH")} บาท</td>
+                            <td>{formatNumber(listing.price, language)} บาท</td>
                             <td>
                               <span className="status-badge">ถังขยะ</span>
-                              <div className="admin-table-timestamp">ลบถาวรวันที่ {new Date(listing.expires_at).toLocaleString("th-TH")}</div>
+                              <div className="admin-table-timestamp">ลบถาวรวันที่ {new Date(listing.expires_at).toLocaleString(language === "en" ? "en-US" : "th-TH")}</div>
                             </td>
                             <td>
                               <div className="admin-manage-actions">
@@ -1095,6 +966,7 @@ export default function ApartmentHome() {
             imageIndex={detailImageIndex}
             setImageIndex={setDetailImageIndex}
             roomStatusLabels={ROOM_STATUS_LABELS}
+            language={language}
             onClose={() => setSelectedListing(null)}
           />
         )}
@@ -1104,25 +976,11 @@ export default function ApartmentHome() {
             onClose={() => setPendingReviewListing(null)}
             onApprove={() => approveListing(pendingReviewListing.id)}
             approving={approvingListingId === pendingReviewListing.id}
+            language={language}
           />
         )}
       </div>
-    );
-  }
-
-  if (authMode) {
-    return (
-      <AuthScreen
-        authMode={authMode}
-        authForm={authForm}
-        setAuthForm={setAuthForm}
-        authError={authError}
-        authLoading={authLoading}
-        submitAuth={submitAuth}
-        openAuth={openAuth}
-        goHome={goHome}
-        returnHome={() => { setAuthMode(null); setPendingListing(false); }}
-      />
+      </Localized>
     );
   }
 
@@ -1156,6 +1014,9 @@ export default function ApartmentHome() {
       } else if (listingStep === 1) {
         if (!listingForm.price || Number(listingForm.price) <= 0) errors.push("กรุณากรอกราคาที่ถูกต้อง");
         if (!listingForm.areaSqm || Number(listingForm.areaSqm) <= 0) errors.push("กรุณากรอกพื้นที่ใช้สอย");
+        if (listingRoomStatus === "occupied" && !listingForm.tenantContractEndDate) {
+          errors.push("กรุณาระบุวันหมดสัญญาเช่าของผู้เช่า");
+        }
         if (!listingForm.availableDate) errors.push("กรุณาระบุวันที่พร้อมเข้าอยู่หรือพร้อมขาย");
       } else if (listingStep === 2) {
         if (!listingForm.images.length) errors.push("กรุณาอัปโหลดรูปภาพจริงของทรัพย์อย่างน้อย 1 รูป");
@@ -1237,11 +1098,15 @@ export default function ApartmentHome() {
     const fullLocation = [listingForm.subdistrict, listingForm.district, listingForm.province].filter(Boolean).join(" ");
 
     return (
+      <Localized language={language}>
       <div className="ah">
         <div className="wrap">
           <header>
-            <button className="logo logo-button" type="button" onClick={goHome} aria-label="Finzhome ไปหน้าหลัก">Finzhome</button>
-            <button className="nav-link" onClick={() => setListingMode(false)}>กลับหน้าหลัก</button>
+            <button className="logo logo-button" type="button" onClick={goDashboard} aria-label="Finzhome แดชบอร์ด">Finzhome</button>
+            <nav>
+              <button className="nav-link" type="button" onClick={toggleLanguage}>{language === "th" ? "English" : "ไทย"}</button>
+              <button className="nav-link" onClick={() => { setListingMode(false); setAdminDashboard(adminEditingListing); }}>กลับแดชบอร์ด</button>
+            </nav>
           </header>
           <main className="auth-page listing-page">
             <section className="auth-card listing-card">
@@ -1307,6 +1172,22 @@ export default function ApartmentHome() {
                       {listingForm.listingType === "rent" && field("advanceRent", "ค่าเช่าล่วงหน้า (เดือน)", { type: "number", min: 0, max: 36 })}
                       {listingForm.listingType === "rent" && field("minContract", "สัญญาขั้นต่ำ (เดือน)", { type: "number", min: 1, max: 120 })}
                       {field("availableDate", "วันที่พร้อมเข้าอยู่/พร้อมขาย", { type: "date", required: true })}
+                    </div>
+                    <div className="listing-grid">
+                      <label>
+                        มีผู้เช่าไหม
+                        <select value={listingRoomStatus} onChange={(event) => {
+                          const roomStatus = event.target.value;
+                          setListingRoomStatus(roomStatus);
+                          if (roomStatus === "vacant") {
+                            setListingForm((form) => ({ ...form, tenantContractEndDate: "" }));
+                          }
+                        }}>
+                          <option value="vacant">ไม่มีผู้เช่า</option>
+                          <option value="occupied">มีผู้เช่า</option>
+                        </select>
+                      </label>
+                      {listingRoomStatus === "occupied" && field("tenantContractEndDate", "วันหมดสัญญาเช่า (ผู้เช่า)", { type: "date", required: true })}
                     </div>
                   </div>
                 )}
@@ -1381,9 +1262,9 @@ export default function ApartmentHome() {
                 {listingStep === 3 && (
                   <section className="listing-review" aria-label="ตรวจทานประกาศ">
                     <h2>ตรวจทานรายละเอียดก่อนส่ง</h2>
-                    <p className="review-price">{listingForm.listingType === "sale" ? "ขาย" : "ให้เช่า"} · {Number(listingForm.price || 0).toLocaleString("th-TH")} บาท{listingForm.listingType === "rent" ? "/เดือน" : ""}</p>
+                    <p className="review-price">{listingForm.listingType === "sale" ? "ขาย" : "ให้เช่า"} · {formatNumber(listingForm.price || 0, language)} บาท{listingForm.listingType === "rent" ? "/เดือน" : ""}</p>
                     <dl>
-                      <dt>ชื่อประกาศ</dt><dd>{reviewValue(listingForm.projectName)}</dd>
+                      <dt>ชื่อโครงการ</dt><dd>{reviewValue(listingForm.projectName)}</dd>
                       <dt>ประเภททรัพย์</dt><dd>{reviewValue(listingForm.propertyType === "other" ? listingForm.otherPropertyType : ({
                         condo: "คอนโด",
                         apartment: "อพาร์ตเมนต์",
@@ -1394,9 +1275,11 @@ export default function ApartmentHome() {
                       <dt>ทำเล</dt><dd>{reviewValue([fullLocation, listingForm.road, listingForm.nearby].filter(Boolean).join(" · "))}</dd>
                       <dt>รายละเอียดทรัพย์</dt><dd>{reviewValue(`${listingForm.bedrooms || "-"} ห้องนอน · ${listingForm.bathrooms || "-"} ห้องน้ำ · ${listingForm.areaSqm || "-"} ตร.ม. · ${listingForm.parking || 0} ที่จอดรถ`)}</dd>
                       <dt>เงื่อนไข</dt><dd>{listingForm.listingType === "rent" ? `ประกัน ${listingForm.deposit || 0} บาท · ล่วงหน้า ${listingForm.advanceRent || 0} เดือน · สัญญาขั้นต่ำ ${listingForm.minContract || "-"} เดือน` : "ประกาศขาย"}</dd>
+                      <dt>สถานะผู้เช่า</dt><dd>{ROOM_STATUS_LABELS[listingRoomStatus]}</dd>
+                      {listingRoomStatus === "occupied" && <><dt>วันหมดสัญญาเช่า</dt><dd>{reviewValue(listingForm.tenantContractEndDate)}</dd></>}
                       <dt>พร้อมเข้าอยู่/ขาย</dt><dd>{reviewValue(listingForm.availableDate)}</dd>
-                      <dt>เฟอร์นิเจอร์และอุปกรณ์</dt><dd>{[({ none: "ไม่มีเฟอร์นิเจอร์", partial: "มีเฟอร์นิเจอร์บางส่วน", fully: "ตกแต่งครบ" })[listingForm.furnished], ...listingForm.appliances].join(", ")}</dd>
-                      <dt>สิ่งอำนวยความสะดวก</dt><dd>{reviewValue(listingForm.facilities.join(", "))}</dd>
+                      <dt>เฟอร์นิเจอร์และอุปกรณ์</dt><dd>{[({ none: "ไม่มีเฟอร์นิเจอร์", partial: "มีเฟอร์นิเจอร์บางส่วน", fully: "ตกแต่งครบ" })[listingForm.furnished], ...listingForm.appliances.map((item) => translateText(language, item))].join(", ")}</dd>
+                      <dt>สิ่งอำนวยความสะดวก</dt><dd>{reviewValue(listingForm.facilities.map((item) => translateText(language, item)).join(", "))}</dd>
                       <dt>เลี้ยงสัตว์</dt><dd>{listingForm.pets ? "อนุญาต" : "ไม่อนุญาต"}</dd>
                       <dt>รายละเอียดเพิ่มเติม</dt><dd>{reviewValue(listingForm.description)}</dd>
                       <dt>จุดเด่น</dt><dd>{reviewValue(listingForm.highlights.join(", "))}</dd>
@@ -1437,126 +1320,45 @@ export default function ApartmentHome() {
           </main>
         </div>
       </div>
+      </Localized>
+    );
+  }
+
+  if (session && session.role !== "admin") {
+    return (
+      <Localized language={language}>
+      <div className="ah">
+        <div className="wrap">
+          <header>
+            <button className="logo logo-button" type="button" onClick={goDashboard}>Finzhome</button>
+            <nav>
+              <span className="user-email">{session.email}</span>
+              <button className="nav-link" type="button" onClick={toggleLanguage}>{language === "th" ? "English" : "ไทย"}</button>
+              <button className="nav-link" onClick={logout}>ออกจากระบบ</button>
+            </nav>
+          </header>
+          <main className="auth-page">
+            <section className="auth-card">
+              <h1>ไม่มีสิทธิ์เข้าใช้งาน</h1>
+              <p>ระบบนี้สำหรับผู้ดูแลเท่านั้น กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแล</p>
+            </section>
+          </main>
+        </div>
+      </div>
+      </Localized>
     );
   }
 
   return (
-    <div className="ah">
-      <div className="site-header-sticky">
-        <div className="wrap">
-          <header className="site-header">
-            <button className="logo logo-button" type="button" onClick={goHome} aria-label="Finzhome ไปหน้าหลัก">Finzhome</button>
-            <div className="header-search-area">
-              <div className="search header-search" role="search">
-                <span className="search-icon" aria-hidden="true">⌕</span>
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && submitSearch()}
-                  placeholder="ค้นหาชื่อโครงการหรือทำเล"
-                  aria-label="ค้นหาจากชื่อโครงการหรือชื่อที่พัก"
-                />
-                <button
-                  className={`filter-button${active.length ? " has-filters" : ""}`}
-                  type="button"
-                  aria-expanded={filtersOpen}
-                  aria-controls="listing-filters"
-                  onClick={() => setFiltersOpen((open) => !open)}
-                >
-                  <span aria-hidden="true">☷</span> ตัวกรอง{active.length > 0 && <span className="filter-count">{active.length}</span>}
-                </button>
-                <button className="btn" type="button" onClick={submitSearch}>ค้นหา <span aria-hidden="true">→</span></button>
-              </div>
-              {filtersOpen && (
-                <div className="filter-menu" id="listing-filters">
-                  <div className="filter-menu-heading">
-                    <div><strong>ตัวกรองที่พัก</strong><span>เลือกเงื่อนไขที่ต้องการ</span></div>
-                    <button className="filter-clear" type="button" onClick={() => setActive([])} disabled={active.length === 0}>ล้างทั้งหมด</button>
-                  </div>
-                  <div className="filter-options">
-                    {FILTERS.map((filter) => (
-                      <button
-                        key={filter.key}
-                        className={`filter-option${active.includes(filter.key) ? " selected" : ""}`}
-                        type="button"
-                        aria-pressed={active.includes(filter.key)}
-                        onClick={() => toggle(filter.key)}
-                      >
-                        <span className="filter-checkbox" aria-hidden="true">{active.includes(filter.key) ? "✓" : ""}</span>
-                        {filter.label}
-                      </button>
-                    ))}
-                  </div>
-                  <button className="btn filter-apply" type="button" onClick={showFilteredResults}>แสดงผลที่พัก</button>
-                </div>
-              )}
-            </div>
-            <nav>
-              <button className="nav-link" onClick={startListing}>ลงประกาศ</button>
-              {session ? (
-                <>
-                  <span className="user-email">{session.email}{session.role === "admin" ? " · ผู้ดูแล" : ""}</span>
-                  {session.role === "admin" && (
-                    <button className="nav-link" onClick={() => setAdminDashboard(true)}>แดชบอร์ดผู้ดูแล</button>
-                  )}
-                  <button className="nav-link" onClick={logout}>ออกจากระบบ</button>
-                </>
-              ) : (
-                <>
-                  <button className="nav-link" onClick={() => openAuth("login")}>เข้าสู่ระบบ</button>
-                </>
-              )}
-            </nav>
-          </header>
-        </div>
-      </div>
-
-      <main className={`wrap home-main${searchActive ? " search-results-mode" : ""}`}>
-        <section className="results-section" aria-labelledby="results-title">
-          <div className="section-heading">
-            <div>
-              <span className="section-kicker">{searchActive ? "ค้นหาที่พัก" : "คัดสรรมาให้คุณ"}</span>
-              <h2 id="results-title">{searchActive ? "ผลการค้นหา" : "ที่พักน่าอยู่"} <span className="result-count">{listings.length}</span></h2>
-              <p>{searchActive ? `กำลังแสดงที่พัก${submitted ? ` สำหรับ “${submitted}”` : " ตามเงื่อนไขที่เลือก"}` : "เลือกดูประกาศที่ตรงกับจังหวะชีวิตของคุณ"}</p>
-            </div>
-            <span className="results-caption">อัปเดตประกาศใหม่อยู่เสมอ</span>
-          </div>
-        {error ? (
-          <p className="empty" role="alert">{error} กรุณาลองใหม่ภายหลัง</p>
-        ) : loading ? (
-          <p className="empty" role="status">กำลังค้นหาห้องพัก...</p>
-        ) : listings.length === 0 ? (
-          <p className="empty">{submitted || active.length ? "ไม่พบที่พักที่ตรงกับเงื่อนไข ลองลบตัวกรองหรือเปลี่ยนคำค้นหา" : "ยังไม่มีประกาศที่พัก ลองกลับมาดูใหม่ภายหลัง"}</p>
-        ) : (
-          <div className="grid">
-            {listings.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                listing={listing}
-                roomStatusLabels={ROOM_STATUS_LABELS}
-                onOpen={openListingDetails}
-              />
-            ))}
-          </div>
-        )}
-        </section>
-
-      </main>
-
-      <footer>
-        <div className="wrap">Finzhome – ค้นหาและลงประกาศที่พัก</div>
-      </footer>
-
-      {selectedListing && (
-        <ListingDetailsModal
-          listing={selectedListing}
-          imageIndex={detailImageIndex}
-          setImageIndex={setDetailImageIndex}
-          roomStatusLabels={ROOM_STATUS_LABELS}
-          onClose={() => setSelectedListing(null)}
-        />
-      )}
-    </div>
+    <AuthScreen
+      authForm={authForm}
+      setAuthForm={setAuthForm}
+      authError={authError}
+      authLoading={authLoading}
+      submitAuth={submitAuth}
+      goDashboard={goDashboard}
+      language={language}
+      onToggleLanguage={toggleLanguage}
+    />
   );
 }

@@ -1,4 +1,5 @@
 import React from "react";
+import { Localized } from "../i18n.js";
 
 const PROPERTY_TYPES = {
   condo: "คอนโด",
@@ -14,6 +15,7 @@ export default function ListingDetailsModal({
   setImageIndex,
   roomStatusLabels,
   onClose,
+  language,
 }) {
   const details = listing.details || {};
   const images = details.images || [];
@@ -26,6 +28,7 @@ export default function ListingDetailsModal({
   ].filter(Boolean).join(" · ");
 
   return (
+    <Localized language={language}>
     <div
       className="listing-modal-backdrop"
       role="presentation"
@@ -93,7 +96,7 @@ export default function ListingDetailsModal({
               <p className="listing-modal-location">{location || listing.area}</p>
             </div>
             <strong className="listing-modal-price">
-              {listing.price.toLocaleString("th-TH")} บาท{details.listingType === "sale" ? "" : "/เดือน"}
+              {Number(listing.price).toLocaleString(language === "en" ? "en-US" : "th-TH")} บาท{details.listingType === "sale" ? "" : "/เดือน"}
             </strong>
           </div>
           <div className="listing-quick-facts">
@@ -105,12 +108,15 @@ export default function ListingDetailsModal({
               ["ที่จอดรถ", `${details.parking || 0} คัน`],
               ["พร้อมเข้าอยู่", details.availableDate || "ไม่ระบุ"],
               ["สถานะห้อง", roomStatusLabels[listing.room_status] || "ว่าง"],
+              ...(listing.room_status === "occupied" && details.tenantContractEndDate
+                ? [["วันหมดสัญญาเช่า", details.tenantContractEndDate]]
+                : []),
             ].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}
           </div>
           {details.listingType === "rent" && (
             <section className="listing-modal-section">
               <h3>เงื่อนไขการเช่า</h3>
-              <p>เงินประกัน {Number(details.deposit || 0).toLocaleString("th-TH")} บาท · ค่าเช่าล่วงหน้า {details.advanceRent || 0} เดือน · สัญญาขั้นต่ำ {details.minContract || "ไม่ระบุ"} เดือน</p>
+              <p>เงินประกัน {Number(details.deposit || 0).toLocaleString(language === "en" ? "en-US" : "th-TH")} บาท · ค่าเช่าล่วงหน้า {details.advanceRent || 0} เดือน · สัญญาขั้นต่ำ {details.minContract || "ไม่ระบุ"} เดือน</p>
             </section>
           )}
           <section className="listing-modal-section">
@@ -146,5 +152,6 @@ export default function ListingDetailsModal({
         </div>
       </section>
     </div>
+    </Localized>
   );
 }

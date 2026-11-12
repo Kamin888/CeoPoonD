@@ -1,29 +1,30 @@
 import React from "react";
+import { Localized } from "../i18n.js";
 
 export default function AuthScreen({
-  authMode,
   authForm,
   setAuthForm,
   authError,
   authLoading,
   submitAuth,
-  openAuth,
-  goHome,
-  returnHome,
+  goDashboard,
+  language,
+  onToggleLanguage,
 }) {
-  const registering = authMode === "register";
-
   return (
+    <Localized language={language}>
     <div className="ah">
       <div className="wrap">
         <header>
-          <button className="logo logo-button" type="button" onClick={goHome} aria-label="Finzhome ไปหน้าหลัก">Finzhome</button>
-          <button className="nav-link" onClick={returnHome}>กลับหน้าหลัก</button>
+          <button className="logo logo-button" type="button" onClick={goDashboard} aria-label="Finzhome แดชบอร์ด">Finzhome</button>
+          <nav>
+            <button className="nav-link" type="button" onClick={onToggleLanguage}>{language === "th" ? "English" : "ไทย"}</button>
+          </nav>
         </header>
         <main className="auth-page">
           <section className="auth-card">
-            <h1>{registering ? "สมัครสมาชิก" : "เข้าสู่ระบบ"}</h1>
-            <p>{registering ? "สร้างบัญชีเพื่อเตรียมลงประกาศหอพัก" : "เข้าสู่ระบบเพื่อใช้งานบัญชีของคุณ"}</p>
+            <h1>เข้าสู่ระบบผู้ดูแล</h1>
+            <p>เข้าสู่ระบบด้วยบัญชีผู้ดูแลเพื่อใช้งานแดชบอร์ด</p>
             <form onSubmit={submitAuth}>
               <label>
                 อีเมล
@@ -32,7 +33,6 @@ export default function AuthScreen({
                   value={authForm.email}
                   onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })}
                   autoComplete="email"
-                  placeholder={registering ? "" : "admin@gmail.com"}
                   maxLength={254}
                   required
                 />
@@ -43,45 +43,21 @@ export default function AuthScreen({
                   type="password"
                   value={authForm.password}
                   onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })}
-                  autoComplete={registering ? "new-password" : "current-password"}
-                  placeholder={registering ? "" : "123123123"}
+                  autoComplete="current-password"
                   minLength={8}
                   maxLength={72}
                   required
                 />
               </label>
-              {registering && (
-                <label>
-                  ยืนยันรหัสผ่าน
-                  <input
-                    type="password"
-                    value={authForm.confirmPassword}
-                    onChange={(event) => setAuthForm({ ...authForm, confirmPassword: event.target.value })}
-                    autoComplete="new-password"
-                    minLength={8}
-                    maxLength={72}
-                    required
-                  />
-                </label>
-              )}
               {authError && <p className="form-error" role="alert">{authError}</p>}
               <button className="btn auth-submit" type="submit" disabled={authLoading}>
-                {authLoading ? "กำลังดำเนินการ..." : registering ? "สมัครสมาชิก" : "เข้าสู่ระบบ"}
+                {authLoading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
               </button>
             </form>
-            <p className="auth-switch">
-              {registering ? "มีบัญชีอยู่แล้ว?" : "ยังไม่มีบัญชี?"}{" "}
-              <button
-                className="text-button"
-                type="button"
-                onClick={() => openAuth(registering ? "login" : "register")}
-              >
-                {registering ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
-              </button>
-            </p>
           </section>
         </main>
       </div>
     </div>
+    </Localized>
   );
 }
