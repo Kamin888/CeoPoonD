@@ -153,17 +153,19 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-listing-filters button{min-height:38px}
 .ah .admin-manage-list{display:grid;gap:10px}
 .ah .admin-listings-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
-.ah .admin-listings-table{width:100%;min-width:880px;border-collapse:collapse;text-align:left}
+.ah .admin-listings-table{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse;text-align:left}
 .ah .admin-listings-table th,.ah .admin-listings-table td{padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
 .ah .admin-listings-table thead{background:var(--hero);color:var(--muted);font-size:13px}
 .ah .admin-listings-table thead th{font-weight:700}
+.ah .admin-listings-table tr>:nth-child(1){width:10%}
+.ah .admin-listings-table tr>:nth-child(2){width:39%}
+.ah .admin-listings-table tr>:nth-child(3){width:17%}
+.ah .admin-listings-table tr>:nth-child(4){width:14%}
+.ah .admin-listings-table tr>:nth-child(5){width:20%}
 .ah .admin-listings-table tbody tr:last-child th,.ah .admin-listings-table tbody tr:last-child td{border-bottom:0}
-.ah .admin-listings-table tbody th{width:47%;font-weight:400}
-.ah .admin-listings-table tbody td:first-child{width:1%;padding-right:4px;padding-left:4px;white-space:nowrap}
-.ah .admin-listings-table tbody th{padding-left:4px}
-.ah .admin-listings-table tbody td:nth-child(3){width:18%;white-space:nowrap;font-weight:700;color:var(--accent)}
-.ah .admin-listings-table tbody td:nth-child(4){width:14%}
-.ah .admin-listings-table tbody td:last-child{width:20%}
+.ah .admin-listings-table tbody th{font-weight:400;padding-left:8px}
+.ah .admin-listings-table tbody td:first-child{padding-right:4px;padding-left:4px;white-space:nowrap}
+.ah .admin-listings-table tbody td:nth-child(3){white-space:normal;font-weight:700;color:var(--accent)}
 .ah .admin-project-code{color:var(--accent);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;font-weight:700}
 .ah .admin-code-prefix-form{display:flex;align-items:end;gap:9px;flex-wrap:wrap;margin:0 0 12px}
 .ah .admin-code-prefix-form label{display:grid;gap:5px;color:var(--muted);font-size:12px;font-weight:600}
@@ -192,8 +194,8 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-review-modal-details dd{margin:0;color:var(--muted);overflow-wrap:anywhere;white-space:pre-wrap}
 .ah .admin-review-modal-actions{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-top:16px;border-top:1px solid var(--line)}
 .ah .admin-review-modal-actions>span{color:var(--muted);font-size:13px}
-.ah .admin-listings-table .admin-manage-actions{gap:6px}
-.ah .admin-listings-table .secondary-button,.ah .admin-listings-table .danger-button{padding:5px 8px;font-size:12px}
+.ah .admin-listings-table .admin-manage-actions{gap:4px;flex-wrap:nowrap}
+.ah .admin-listings-table .secondary-button,.ah .admin-listings-table .danger-button{padding:5px 6px;font-size:12px;white-space:nowrap}
 .ah .admin-listings-table .admin-room-status{width:min(150px,100%);margin:0}
 .ah .admin-manage-item{display:grid;grid-template-columns:90px minmax(0,1fr) auto;align-items:center;gap:14px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
 .ah .admin-manage-item>img,.ah .admin-manage-placeholder{width:90px;height:72px;object-fit:cover;border-radius:7px;background:var(--hero)}
