@@ -523,21 +523,35 @@ app.put("/api/admin/settings/listing-code-prefix", requireTrustedOrigin, require
   }
 });
 
-app.patch("/api/admin/listings/:id/room-status", requireTrustedOrigin, requireAuth, requireAdmin, async (request, response, next) => {
+app.patch("/api/admin/listings/:id/room-status", requireTrustedOrigin, requireAuth, async (request, response, next) => {
   try {
     const { room_status: roomStatus } = request.body ?? {};
     if (!["vacant", "occupied"].includes(roomStatus)) {
       return response.status(400).json({ error: "สถานะห้องไม่ถูกต้อง" });
     }
     const { rows } = await pool.query(
-      `UPDATE listings
-       SET room_status = $1, updated_at = NOW()
-       WHERE id = $2 AND deleted_at IS NULL
-       RETURNING id, room_status`,
-      [roomStatus, request.params.id]
+      `WITH admin_check AS MATERIALIZED (
+         SELECT EXISTS (
+           SELECT 1 FROM users WHERE id = $3 AND role = 'admin'
+         ) AS is_admin
+       ),
+       updated AS (
+         UPDATE listings
+         SET room_status = $1, updated_at = NOW()
+         WHERE id = $2 AND deleted_at IS NULL
+           AND (SELECT is_admin FROM admin_check)
+         RETURNING id, room_status, updated_at
+       )
+       SELECT admin_check.is_admin, updated.id, updated.room_status, updated.updated_at
+       FROM admin_check LEFT JOIN updated ON TRUE`,
+      [roomStatus, request.params.id, request.userId]
     );
-    if (!rows[0]) return response.status(404).json({ error: "ไม่พบประกาศที่ต้องการเปลี่ยนสถานะห้อง" });
-    response.json({ data: rows[0] });
+    if (!rows[0].is_admin) {
+      return response.status(403).json({ error: "เฉพาะผู้ดูแลระบบเท่านั้นที่ดำเนินการนี้ได้" });
+    }
+    if (!rows[0].id) return response.status(404).json({ error: "ไม่พบประกาศที่ต้องการเปลี่ยนสถานะห้อง" });
+    const { id, room_status: updatedRoomStatus, updated_at: updatedAt } = rows[0];
+    response.json({ data: { id, room_status: updatedRoomStatus, updated_at: updatedAt } });
   } catch (error) {
     next(error);
   }

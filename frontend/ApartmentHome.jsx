@@ -584,6 +584,13 @@ export default function ApartmentHome() {
   const updateRoomStatus = async (listing, roomStatus) => {
     setAdminListingsError("");
     setUpdatingRoomStatusId(listing.id);
+    const previousRoomStatus = listing.room_status || "vacant";
+    const optimisticUpdatedAt = new Date().toISOString();
+    setAdminListings((current) => current.map((item) =>
+      item.id === listing.id
+        ? { ...item, room_status: roomStatus, updated_at: optimisticUpdatedAt }
+        : item
+    ));
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(`${apiUrl}/api/admin/listings/${listing.id}/room-status`, {
@@ -594,8 +601,17 @@ export default function ApartmentHome() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "เปลี่ยนสถานะห้องไม่สำเร็จ");
-      setListingRefresh((count) => count + 1);
+      setAdminListings((current) => current.map((item) =>
+        item.id === listing.id
+          ? { ...item, ...result.data }
+          : item
+      ));
     } catch (requestError) {
+      setAdminListings((current) => current.map((item) =>
+        item.id === listing.id
+          ? { ...item, room_status: previousRoomStatus, updated_at: listing.updated_at }
+          : item
+      ));
       setAdminListingsError(requestError.message || "ไม่สามารถเชื่อมต่อระบบได้");
     } finally {
       setUpdatingRoomStatusId(null);
