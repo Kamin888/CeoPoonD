@@ -187,11 +187,8 @@ export default function ApartmentHome() {
   const [adminListingsError, setAdminListingsError] = useState("");
   const [adminExportError, setAdminExportError] = useState("");
   const [listingCodePrefix, setListingCodePrefix] = useState("");
-  const [listingCodePrefixDraft, setListingCodePrefixDraft] = useState("");
   const [listingCodePrefixLoading, setListingCodePrefixLoading] = useState(true);
-  const [listingCodePrefixSaving, setListingCodePrefixSaving] = useState(false);
   const [listingCodePrefixError, setListingCodePrefixError] = useState("");
-  const [listingCodePrefixEditorOpen, setListingCodePrefixEditorOpen] = useState(false);
   const [trashedListings, setTrashedListings] = useState([]);
   const [trashError, setTrashError] = useState("");
   const [adminSection, setAdminSection] = useState("all");
@@ -477,7 +474,6 @@ export default function ApartmentHome() {
           throw new Error("คำนำหน้ารหัสที่ได้รับไม่ถูกต้อง");
         }
         setListingCodePrefix(prefix);
-        setListingCodePrefixDraft(prefix);
       } catch (requestError) {
         if (requestError.name !== "AbortError") {
           setListingCodePrefixError(requestError.message || "โหลดคำนำหน้ารหัสไม่สำเร็จ");
@@ -676,41 +672,6 @@ export default function ApartmentHome() {
     }
   };
 
-  const saveListingCodePrefix = async (event) => {
-    event.preventDefault();
-    const prefix = listingCodePrefixDraft.trim().toUpperCase();
-    if (!/^[A-Z]{1,10}$/.test(prefix)) {
-      setListingCodePrefixError("คำนำหน้ารหัสต้องเป็นตัวอักษรภาษาอังกฤษ 1-10 ตัว");
-      return;
-    }
-
-    setListingCodePrefixSaving(true);
-    setListingCodePrefixError("");
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || "";
-      const response = await fetch(`${apiUrl}/api/admin/settings/listing-code-prefix`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ prefix }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "บันทึกคำนำหน้ารหัสไม่สำเร็จ");
-      const savedPrefix = result.data?.prefix;
-      if (typeof savedPrefix !== "string" || !/^[A-Z]{1,10}$/.test(savedPrefix)) {
-        throw new Error("คำนำหน้ารหัสที่ได้รับไม่ถูกต้อง");
-      }
-      setListingCodePrefix(savedPrefix);
-      setListingCodePrefixDraft(savedPrefix);
-      setListingCodePrefixEditorOpen(false);
-      setNotice(`เปลี่ยนคำนำหน้ารหัสเป็น ${savedPrefix} แล้ว`);
-    } catch (requestError) {
-      setListingCodePrefixError(requestError.message || "บันทึกคำนำหน้ารหัสไม่สำเร็จ");
-    } finally {
-      setListingCodePrefixSaving(false);
-    }
-  };
-
   const exportAdminListings = () => {
     setAdminExportError("");
     try {
@@ -854,59 +815,14 @@ export default function ApartmentHome() {
                     <span aria-hidden="true">↓</span> ดาวน์โหลด Excel
                   </button>
                   <button
-                    className="secondary-button"
+                    className="secondary-button admin-create-listing-button"
                     type="button"
                     onClick={createAdminListing}
                   >
                     ลงข้อมูล
                   </button>
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => {
-                      setListingCodePrefixDraft(listingCodePrefix);
-                      setListingCodePrefixEditorOpen((open) => !open);
-                    }}
-                    disabled={listingCodePrefixLoading}
-                  >
-                    {listingCodePrefixLoading ? "กำลังโหลด..." : <>เปลี่ยนคำนำหน้า <strong>({listingCodePrefix || "—"})</strong></>}
-                  </button>
                 </div>
               </div>
-              {listingCodePrefixEditorOpen && (
-                <form className="admin-code-prefix-form" onSubmit={saveListingCodePrefix}>
-                  <label>
-                    คำนำหน้ารหัส
-                    <input
-                      type="text"
-                      value={listingCodePrefixDraft}
-                      onChange={(event) => setListingCodePrefixDraft(event.target.value)}
-                      maxLength={10}
-                      pattern="[A-Za-z]{1,10}"
-                      autoCapitalize="characters"
-                      required
-                    />
-                  </label>
-                  <button
-                    className="secondary-button"
-                    type="submit"
-                    disabled={listingCodePrefixSaving || listingCodePrefixDraft.trim().toUpperCase() === listingCodePrefix}
-                  >
-                    {listingCodePrefixSaving ? "กำลังบันทึก..." : "บันทึกคำนำหน้า"}
-                  </button>
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => {
-                      setListingCodePrefixEditorOpen(false);
-                      setListingCodePrefixDraft(listingCodePrefix);
-                    }}
-                    disabled={listingCodePrefixSaving}
-                  >
-                    ยกเลิก
-                  </button>
-                </form>
-              )}
               {listingCodePrefixError && <p className="form-error" role="alert">{listingCodePrefixError}</p>}
               {adminListingsError && <p className="form-error" role="alert">{adminListingsError}</p>}
               {adminExportError && <p className="form-error" role="alert">{adminExportError}</p>}

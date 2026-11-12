@@ -145,8 +145,10 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-manage-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:14px}
 .ah .admin-manage-heading h2{margin:0}
 .ah .admin-manage-heading p{margin:4px 0;color:var(--muted)}
-.ah .admin-manage-heading-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.ah .admin-manage-heading-actions{display:flex;width:100%;align-items:center;gap:9px;flex-wrap:wrap}
 .ah .admin-export-button{white-space:nowrap}
+.ah .admin-export-button,.ah .admin-create-listing-button{border-color:#007a98;background:#007a98;color:#fff;font-weight:700}
+.ah .admin-create-listing-button{margin-left:auto}
 .ah .admin-listing-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:end;gap:12px;margin:16px 0}
 .ah .admin-listing-filters label,.ah .admin-room-status{display:grid;gap:5px;color:var(--muted);font-size:12px;font-weight:600}
 .ah .admin-listing-filters input,.ah .admin-listing-filters select,.ah .admin-room-status select{width:100%;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
@@ -167,9 +169,6 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-listings-table tbody td:first-child{padding-right:4px;padding-left:4px;white-space:nowrap}
 .ah .admin-listings-table tbody td:nth-child(3){white-space:normal;font-weight:700;color:var(--accent)}
 .ah .admin-project-code{color:var(--accent);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;font-weight:700}
-.ah .admin-code-prefix-form{display:flex;align-items:end;gap:9px;flex-wrap:wrap;margin:0 0 12px}
-.ah .admin-code-prefix-form label{display:grid;gap:5px;color:var(--muted);font-size:12px;font-weight:600}
-.ah .admin-code-prefix-form input{width:140px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;text-transform:uppercase}
 .ah .admin-table-listing{display:flex;align-items:center;gap:12px;min-width:0}
 .ah .admin-table-listing>img,.ah .admin-table-placeholder{flex:0 0 64px;width:64px;height:54px;border-radius:7px;object-fit:cover;background:var(--hero)}
 .ah .admin-table-placeholder{display:grid;place-items:center;color:var(--muted);font-size:11px}
