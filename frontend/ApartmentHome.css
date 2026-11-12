@@ -187,6 +187,8 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-listings-table .admin-actions-menu-item{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;min-width:0;min-height:32px;padding:6px 8px;font-size:12px;text-align:left;white-space:normal}
 .ah .admin-actions-menu-item svg{flex:0 0 16px}
 .ah .admin-actions-menu-item.danger-button{border-color:var(--line);background:var(--surface);color:#a12c27}
+.ah .admin-pagination{display:flex;justify-content:center;align-items:center;gap:12px;padding:14px 0}
+.ah .admin-pagination>span{color:var(--muted);font-size:13px;white-space:nowrap}
 .ah .admin-actions-menu-item.danger-button:hover:not(:disabled){background:var(--surface)}
 [data-theme="dark"] .ah .admin-actions-menu-item.danger-button{color:#ff8a80}
 .ah .listing-modal-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:24px;background:#06131ecc;backdrop-filter:blur(5px)}

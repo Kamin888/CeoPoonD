@@ -322,6 +322,16 @@ function validateListingInput(body) {
   if (!["draft", "published"].includes(status)) {
     return { error: "สถานะประกาศไม่ถูกต้อง" };
   }
+  if (body.bathrooms !== undefined && body.bathrooms !== "" &&
+      ((typeof body.bathrooms !== "string" && typeof body.bathrooms !== "number") ||
+        !Number.isSafeInteger(Number(body.bathrooms)))) {
+    return { error: "จำนวนห้องน้ำต้องเป็นจำนวนเต็ม" };
+  }
+  if (body.floor !== undefined && body.floor !== "" &&
+      ((typeof body.floor !== "string" && typeof body.floor !== "number") ||
+        !Number.isSafeInteger(Number(body.floor)))) {
+    return { error: "ชั้นต้องเป็นเลขจำนวนเต็ม" };
+  }
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const area = typeof body.area === "string" ? body.area.trim() : "";

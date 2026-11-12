@@ -41,6 +41,7 @@ const EMPTY_LISTING = {
 };
 
 const LISTING_STEPS = ["ทำเลและประเภท", "รายละเอียดและราคา", "สิ่งอำนวยความสะดวก", "ตรวจทาน"];
+const LISTINGS_PER_PAGE = 10;
 const STATUS_LABELS = {
   draft: "ฉบับร่าง",
   published: "เผยแพร่แล้ว",
@@ -73,6 +74,29 @@ function formatListingTimestamp(value, language) {
 
 function formatNumber(value, language) {
   return Number(value).toLocaleString(language === "en" ? "en-US" : "th-TH");
+}
+
+function formatThousands(value) {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function handleThousandsInput(event, setValue) {
+  const input = event.currentTarget;
+  const cursorPosition = input.selectionStart ?? input.value.length;
+  const digitsBeforeCursor = input.value.slice(0, cursorPosition).replace(/\D/g, "").length;
+  const value = input.value.replace(/\D/g, "");
+  const formattedValue = formatThousands(value);
+  setValue(value);
+  requestAnimationFrame(() => {
+    let nextCursorPosition = 0;
+    let digitsCounted = 0;
+    while (nextCursorPosition < formattedValue.length && digitsCounted < digitsBeforeCursor) {
+      if (/\d/.test(formattedValue[nextCursorPosition])) digitsCounted += 1;
+      nextCursorPosition += 1;
+    }
+    input.setSelectionRange(nextCursorPosition, nextCursorPosition);
+  });
 }
 
 function formatListingCode(id, prefix) {
@@ -189,6 +213,7 @@ export default function ApartmentHome() {
   const [trashedListings, setTrashedListings] = useState([]);
   const [trashError, setTrashError] = useState("");
   const [adminSection, setAdminSection] = useState("all");
+  const [adminPage, setAdminPage] = useState(1);
   const [adminRoomStatusFilter, setAdminRoomStatusFilter] = useState("all");
   const [adminMinPriceFilter, setAdminMinPriceFilter] = useState("");
   const [adminMaxPriceFilter, setAdminMaxPriceFilter] = useState("");
@@ -234,6 +259,10 @@ export default function ApartmentHome() {
 
   const normalizedAdminNameFilter = adminNameFilter.trim().toLocaleLowerCase();
   const normalizedAdminCodeFilter = adminCodeFilter.trim().toLocaleUpperCase();
+  useEffect(() => {
+    setAdminPage(1);
+  }, [adminCodeFilter, adminMaxPriceFilter, adminMinPriceFilter, adminNameFilter, adminRoomStatusFilter, listingRefresh]);
+
   const visibleAdminListings = adminListings;
   const vacantListingsCount = visibleAdminListings.filter((listing) => (listing.room_status || "vacant") === "vacant").length;
   const occupiedListingsCount = visibleAdminListings.filter((listing) => listing.room_status === "occupied").length;
@@ -248,6 +277,12 @@ export default function ApartmentHome() {
     const matchesMaxPrice = adminMaxPriceFilter === "" || listing.price <= Number(adminMaxPriceFilter);
     return matchesName && matchesCode && matchesRoomStatus && matchesMinPrice && matchesMaxPrice;
   });
+  const totalAdminPages = Math.ceil(filteredAdminListings.length / LISTINGS_PER_PAGE);
+  const currentAdminPage = Math.min(adminPage, Math.max(totalAdminPages, 1));
+  const paginatedAdminListings = filteredAdminListings.slice(
+    (currentAdminPage - 1) * LISTINGS_PER_PAGE,
+    currentAdminPage * LISTINGS_PER_PAGE
+  );
 
   const goDashboard = () => {
     setAdminDashboard(true);
@@ -343,6 +378,11 @@ export default function ApartmentHome() {
     }
   };
 
+  const hasInvalidBathrooms = () =>
+    listingForm.bathrooms !== "" && !Number.isSafeInteger(Number(listingForm.bathrooms));
+  const hasInvalidFloor = () =>
+    listingForm.floor !== "" && !Number.isSafeInteger(Number(listingForm.floor));
+
   const validateListing = () => {
     const errors = [];
     if (!listingForm.projectName.trim()) errors.push("กรุณากรอกชื่อโครงการหรือชื่อทรัพย์");
@@ -374,6 +414,13 @@ export default function ApartmentHome() {
 
   const saveListing = async (status) => {
     setValidationErrors([]);
+    const integerErrors = [];
+    if (hasInvalidBathrooms()) integerErrors.push("จำนวนห้องน้ำต้องเป็นจำนวนเต็ม");
+    if (hasInvalidFloor()) integerErrors.push("ชั้นต้องเป็นเลขจำนวนเต็ม");
+    if (integerErrors.length) {
+      setValidationErrors(integerErrors);
+      return;
+    }
     if (status === "published") {
       const errors = validateListing();
       if (errors.length) {
@@ -719,7 +766,10 @@ export default function ApartmentHome() {
                   <input
                     type="search"
                     value={adminCodeFilter}
-                    onChange={(event) => setAdminCodeFilter(event.target.value)}
+                    onChange={(event) => {
+                      setAdminCodeFilter(event.target.value);
+                      setAdminPage(1);
+                    }}
                     placeholder="ค้นหารหัส"
                   />
                 </label>
@@ -728,13 +778,19 @@ export default function ApartmentHome() {
                   <input
                     type="search"
                     value={adminNameFilter}
-                    onChange={(event) => setAdminNameFilter(event.target.value)}
+                    onChange={(event) => {
+                      setAdminNameFilter(event.target.value);
+                      setAdminPage(1);
+                    }}
                     placeholder="ค้นหาชื่อ"
                   />
                 </label>
                 <label>
                   สถานะห้อง
-                  <select value={adminRoomStatusFilter} onChange={(event) => setAdminRoomStatusFilter(event.target.value)}>
+                  <select value={adminRoomStatusFilter} onChange={(event) => {
+                    setAdminRoomStatusFilter(event.target.value);
+                    setAdminPage(1);
+                  }}>
                     <option value="all">ทั้งหมด</option>
                     <option value="vacant">ว่าง</option>
                     <option value="occupied">ไม่ว่าง</option>
@@ -743,20 +799,26 @@ export default function ApartmentHome() {
                 <label>
                   ราคาตั้งแต่ (บาท)
                   <input
-                    type="number"
-                    min="0"
-                    value={adminMinPriceFilter}
-                    onChange={(event) => setAdminMinPriceFilter(event.target.value)}
+                    type="text"
+                    inputMode="numeric"
+                    value={formatThousands(adminMinPriceFilter)}
+                    onChange={(event) => {
+                      handleThousandsInput(event, setAdminMinPriceFilter);
+                      setAdminPage(1);
+                    }}
                     placeholder="ไม่กำหนด"
                   />
                 </label>
                 <label>
                   ราคาสูงสุด (บาท)
                   <input
-                    type="number"
-                    min="0"
-                    value={adminMaxPriceFilter}
-                    onChange={(event) => setAdminMaxPriceFilter(event.target.value)}
+                    type="text"
+                    inputMode="numeric"
+                    value={formatThousands(adminMaxPriceFilter)}
+                    onChange={(event) => {
+                      handleThousandsInput(event, setAdminMaxPriceFilter);
+                      setAdminPage(1);
+                    }}
                     placeholder="ไม่กำหนด"
                   />
                 </label>
@@ -769,6 +831,7 @@ export default function ApartmentHome() {
                     setAdminRoomStatusFilter("all");
                     setAdminMinPriceFilter("");
                     setAdminMaxPriceFilter("");
+                    setAdminPage(1);
                   }}
                   disabled={!adminCodeFilter && !adminNameFilter && adminRoomStatusFilter === "all" && !adminMinPriceFilter && !adminMaxPriceFilter}
                 >
@@ -794,7 +857,7 @@ export default function ApartmentHome() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredAdminListings.map((listing) => (
+                        {paginatedAdminListings.map((listing) => (
                           <tr key={listing.id}>
                             <td><span className="admin-project-code">{formatListingCode(listing.id, listingCodePrefix)}</span></td>
                             <th scope="row">
@@ -886,6 +949,25 @@ export default function ApartmentHome() {
                     </table>
                   )}
                 </div>
+              )}
+              {totalAdminPages > 1 && (
+                <nav className="admin-pagination" aria-label="การแบ่งหน้า">
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    aria-label="หน้าก่อนหน้า"
+                    onClick={() => setAdminPage(currentAdminPage - 1)}
+                    disabled={currentAdminPage === 1}
+                  >ก่อนหน้า</button>
+                  <span>{t(`หน้า ${currentAdminPage} จาก ${totalAdminPages}`)}</span>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    aria-label="หน้าถัดไป"
+                    onClick={() => setAdminPage(currentAdminPage + 1)}
+                    disabled={currentAdminPage === totalAdminPages}
+                  >ถัดไป</button>
+                </nav>
               )}
             </section>}
             {adminSection === "trash" && (
@@ -1010,6 +1092,8 @@ export default function ApartmentHome() {
       } else if (listingStep === 1) {
         if (!listingForm.price || Number(listingForm.price) <= 0) errors.push("กรุณากรอกราคาที่ถูกต้อง");
         if (!listingForm.areaSqm || Number(listingForm.areaSqm) <= 0) errors.push("กรุณากรอกพื้นที่ใช้สอย");
+        if (hasInvalidBathrooms()) errors.push("จำนวนห้องน้ำต้องเป็นจำนวนเต็ม");
+        if (hasInvalidFloor()) errors.push("ชั้นต้องเป็นเลขจำนวนเต็ม");
         if (listingRoomStatus === "occupied" && !listingForm.tenantContractEndDate) {
           errors.push("กรุณาระบุวันหมดสัญญาเช่าของผู้เช่า");
         }
@@ -1078,10 +1162,15 @@ export default function ApartmentHome() {
         {label}
         <input
           name={name}
-          value={listingForm[name]}
-          onChange={updateListingField}
-          maxLength={options.maxLength || 160}
-          type={options.type || "text"}
+          value={["price", "deposit"].includes(name) ? formatThousands(listingForm[name]) : listingForm[name]}
+          onChange={["price", "deposit"].includes(name)
+            ? (event) => handleThousandsInput(event, (value) => {
+              setListingForm((form) => ({ ...form, [name]: value }));
+            })
+            : updateListingField}
+          maxLength={options.maxLength || (["price", "deposit"].includes(name) ? 13 : 160)}
+          type={["price", "deposit"].includes(name) ? "text" : options.type || "text"}
+          inputMode={["price", "deposit"].includes(name) ? "numeric" : undefined}
           min={options.min}
           max={options.max}
           step={options.step}
@@ -1158,8 +1247,8 @@ export default function ApartmentHome() {
                   <div className="listing-fields">
                     <div className="listing-grid">
                       {listingForm.propertyType !== "land" && field("bedrooms", "ห้องนอน", { type: "number", min: 0, max: 100 })}
-                      {listingForm.propertyType !== "land" && field("bathrooms", "ห้องน้ำ", { type: "number", min: 0, max: 100, step: 0.5 })}
-                      {field("floor", "ชั้น", { maxLength: 30 })}
+                      {listingForm.propertyType !== "land" && field("bathrooms", "ห้องน้ำ", { type: "number", min: 0, max: 100, step: 1 })}
+                      {field("floor", "ชั้น", { type: "number", step: 1 })}
                       {field("areaSqm", "พื้นที่ใช้สอย (ตร.ม.)", { type: "number", min: 1, max: 100000, step: 0.1, required: true })}
                       {field("parking", "ที่จอดรถ (คัน)", { type: "number", min: 0, max: 100 })}
                     </div>

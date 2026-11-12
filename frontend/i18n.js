@@ -83,6 +83,8 @@ const ENGLISH = {
   "กรุณากรอกราคาที่ถูกต้องและมากกว่า 0 บาท": "Enter a valid price greater than 0 THB.",
   "กรุณากรอกราคาที่ถูกต้อง": "Enter a valid price.",
   "กรุณากรอกพื้นที่ใช้สอย": "Enter the usable area.",
+  "จำนวนห้องน้ำต้องเป็นจำนวนเต็ม": "The number of bathrooms must be a whole number.",
+  "ชั้นต้องเป็นเลขจำนวนเต็ม": "The floor must be a whole number.",
   "กรุณาระบุวันหมดสัญญาเช่าของผู้เช่า": "Enter the tenant's lease end date.",
   "กรุณาระบุวันที่พร้อมเข้าอยู่หรือพร้อมขาย": "Enter the date the property is available.",
   "กรุณาอัปโหลดรูปภาพจริงของทรัพย์อย่างน้อย 1 รูป": "Upload at least one real photo of the property.",
@@ -114,6 +116,10 @@ const ENGLISH = {
   "ประกาศที่ใช้งาน": "Active listings",
   "ในถังขยะ": "In trash",
   "รายการ": "items",
+  "การแบ่งหน้า": "Pagination",
+  "หน้าก่อนหน้า": "Previous page",
+  "หน้าถัดไป": "Next page",
+  "ก่อนหน้า": "Previous",
   "ราคา": "Price",
   "ราคาเช่า": "Rental price",
   "ราคาขาย": "Sale price",
@@ -358,6 +364,7 @@ const ENGLISH = {
 };
 
 const PATTERNS = [
+  [/^หน้า (\d+) จาก (\d+)$/, "Page $1 of $2"],
   [/^ดูรายละเอียด (.+)$/, "View details for $1"],
   [/^สถานะห้องของ (.+)$/, "Occupancy status for $1"],
   [/^รูปที่ (\d+) ของ (.+)$/, "Image $1 of $2"],
