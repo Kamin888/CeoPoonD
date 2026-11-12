@@ -32,6 +32,7 @@ export default function AuthScreen({
                   value={authForm.email}
                   onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })}
                   autoComplete="email"
+                  placeholder={registering ? "" : "admin@gmail.com"}
                   maxLength={254}
                   required
                 />
@@ -43,6 +44,7 @@ export default function AuthScreen({
                   value={authForm.password}
                   onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })}
                   autoComplete={registering ? "new-password" : "current-password"}
+                  placeholder={registering ? "" : "123123123"}
                   minLength={8}
                   maxLength={72}
                   required
