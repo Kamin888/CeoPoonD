@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import "./ApartmentHome.css";
 import { Localized, translateText } from "./i18n.js";
 import AuthScreen from "./components/AuthScreen.jsx";
-import AdminReviewModal from "./components/AdminReviewModal.jsx";
 import ListingDetailsModal from "./components/ListingDetailsModal.jsx";
 import ThemeToggle from "./components/ThemeToggle.jsx";
 
@@ -44,7 +43,6 @@ const EMPTY_LISTING = {
 const LISTING_STEPS = ["ทำเลและประเภท", "รายละเอียดและราคา", "สิ่งอำนวยความสะดวก", "ตรวจทาน"];
 const STATUS_LABELS = {
   draft: "ฉบับร่าง",
-  pending_review: "รอตรวจสอบ",
   published: "เผยแพร่แล้ว",
   closed: "ปิดประกาศ",
 };
@@ -182,7 +180,6 @@ export default function ApartmentHome() {
   const [listingError, setListingError] = useState("");
   const [listingLoading, setListingLoading] = useState(false);
   const [listingRefresh, setListingRefresh] = useState(0);
-  const [pendingReviews, setPendingReviews] = useState([]);
   const [adminListings, setAdminListings] = useState([]);
   const [adminListingsError, setAdminListingsError] = useState("");
   const [adminExportError, setAdminExportError] = useState("");
@@ -199,12 +196,8 @@ export default function ApartmentHome() {
   const [adminCodeFilter, setAdminCodeFilter] = useState("");
   const [updatingRoomStatusId, setUpdatingRoomStatusId] = useState(null);
   const [openAdminActionMenuId, setOpenAdminActionMenuId] = useState(null);
-  const [reviewError, setReviewError] = useState("");
-  const [reviewLoading, setReviewLoading] = useState(false);
-  const [approvingListingId, setApprovingListingId] = useState(null);
   const [adminDashboard, setAdminDashboard] = useState(true);
   const [selectedListing, setSelectedListing] = useState(null);
-  const [pendingReviewListing, setPendingReviewListing] = useState(null);
   const [detailImageIndex, setDetailImageIndex] = useState(0);
 
   useEffect(() => {
@@ -241,7 +234,7 @@ export default function ApartmentHome() {
 
   const normalizedAdminNameFilter = adminNameFilter.trim().toLocaleLowerCase();
   const normalizedAdminCodeFilter = adminCodeFilter.trim().toLocaleUpperCase();
-  const visibleAdminListings = adminListings.filter((listing) => listing.status !== "pending_review");
+  const visibleAdminListings = adminListings;
   const filteredAdminListings = visibleAdminListings.filter((listing) => {
     const matchesName = !normalizedAdminNameFilter ||
       listing.name.toLocaleLowerCase().includes(normalizedAdminNameFilter);
@@ -267,13 +260,12 @@ export default function ApartmentHome() {
   };
 
   useEffect(() => {
-    if (!selectedListing && !pendingReviewListing) return undefined;
+    if (!selectedListing) return undefined;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const closeOnEscape = (event) => {
       if (event.key === "Escape") {
         setSelectedListing(null);
-        setPendingReviewListing(null);
       }
     };
     window.addEventListener("keydown", closeOnEscape);
@@ -281,7 +273,7 @@ export default function ApartmentHome() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [selectedListing, pendingReviewListing]);
+  }, [selectedListing]);
 
   const submitAuth = async (event) => {
     event.preventDefault();
@@ -380,7 +372,7 @@ export default function ApartmentHome() {
 
   const saveListing = async (status) => {
     setValidationErrors([]);
-    if (status === "pending_review") {
+    if (status === "published") {
       const errors = validateListing();
       if (errors.length) {
         setValidationErrors(errors);
@@ -422,11 +414,11 @@ export default function ApartmentHome() {
       setAdminDashboard(adminEditingListing);
       setListingRefresh((count) => count + 1);
       setNotice(
-        (listingEditStatus === "published" || listingEditStatus === "closed") && status === "pending_review"
-          ? "ส่งข้อมูลแก้ไขแล้ว ประกาศถูกตั้งเป็นรอตรวจสอบและจะเผยแพร่อีกครั้งหลังผู้ดูแลอนุมัติ"
-          : status === "draft"
-            ? "บันทึกฉบับร่างแล้ว"
-            : "ส่งประกาศเรียบร้อยแล้ว สถานะ: รอตรวจสอบ"
+        status === "draft"
+          ? "บันทึกฉบับร่างแล้ว"
+          : listingId
+            ? "แก้ไขประกาศเรียบร้อยแล้ว และแสดงข้อมูลล่าสุดทันที"
+            : "ลงประกาศเรียบร้อยแล้ว และแสดงในข้อมูลโครงการทันที"
       );
     } catch (requestError) {
       setListingError(requestError.message || "ไม่สามารถเชื่อมต่อระบบได้");
@@ -441,7 +433,7 @@ export default function ApartmentHome() {
       setListingError("กรุณากดปุ่มถัดไปเพื่อตรวจสอบข้อมูลในขั้นตอนนี้");
       return;
     }
-    saveListing("pending_review");
+    saveListing("published");
   };
 
   useEffect(() => {
@@ -532,64 +524,6 @@ export default function ApartmentHome() {
     loadTrash();
     return () => controller.abort();
   }, [session, listingRefresh]);
-
-  useEffect(() => {
-    if (session?.role !== "admin") {
-      setPendingReviews([]);
-      setReviewError("");
-      setReviewLoading(false);
-      return;
-    }
-    const controller = new AbortController();
-    async function loadPendingReviews() {
-      setReviewLoading(true);
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || "";
-        const response = await fetch(`${apiUrl}/api/admin/listings/pending`, {
-          credentials: "include",
-          signal: controller.signal,
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "โหลดคิวตรวจสอบไม่สำเร็จ");
-        setPendingReviews(result.data);
-        setReviewError("");
-      } catch (requestError) {
-        if (requestError.name !== "AbortError") {
-          setReviewError(requestError.message || "ไม่สามารถเชื่อมต่อระบบตรวจสอบได้");
-        }
-      } finally {
-        if (!controller.signal.aborted) setReviewLoading(false);
-      }
-    }
-    loadPendingReviews();
-    return () => controller.abort();
-  }, [session, listingRefresh]);
-
-  const approveListing = async (id) => {
-    const listing = pendingReviews.find((item) => item.id === id);
-    if (!window.confirm(t(`ยืนยันอนุมัติ “${listing?.name || "ประกาศนี้"}” และเผยแพร่ต่อสาธารณะหรือไม่?`))) {
-      return;
-    }
-    setApprovingListingId(id);
-    setReviewError("");
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || "";
-      const response = await fetch(`${apiUrl}/api/admin/listings/${id}/approve`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "อนุมัติประกาศไม่สำเร็จ");
-      const approvedListing = pendingReviews.find((listing) => listing.id === id);
-      setNotice(`อนุมัติประกาศ “${approvedListing?.name || "ประกาศ"}” และเผยแพร่แล้ว`);
-      setListingRefresh((count) => count + 1);
-    } catch (requestError) {
-      setReviewError(requestError.message || "ไม่สามารถเชื่อมต่อระบบตรวจสอบได้");
-    } finally {
-      setApprovingListingId(null);
-    }
-  };
 
   const updateRoomStatus = async (listing, roomStatus) => {
     setAdminListingsError("");
@@ -717,7 +651,7 @@ export default function ApartmentHome() {
   if (adminDashboard && session?.role === "admin") {
     return (
       <Localized language={language}>
-      <div className={`ah${adminSection === "all" || adminSection === "pending" || adminSection === "trash" ? " admin-table-view" : ""}`}>
+      <div className={`ah${adminSection === "all" || adminSection === "trash" ? " admin-table-view" : ""}`}>
         <div className="wrap admin-dashboard">
           <header>
             <button className="logo logo-button" type="button" onClick={goDashboard} aria-label="Finzhome แดชบอร์ด">Finzhome<small> ADMIN</small></button>
@@ -731,12 +665,10 @@ export default function ApartmentHome() {
           <main>
             <section className="admin-dashboard-heading">
               <span className="eyebrow">ADMIN DASHBOARD</span>
-              <h1>{adminSection === "pending" ? "รอตรวจสอบ" : adminSection === "trash" ? "ถังขยะ" : "ข้อมูลโครงการ"}</h1>
-              <p>{adminSection === "pending"
-                ? "ตรวจรายละเอียดและรูปภาพก่อนยืนยันเผยแพร่"
-                : adminSection === "trash"
-                  ? "กู้คืนประกาศได้ภายใน 15 วัน ก่อนลบออกจากระบบถาวร"
-                  : "จัดการ แก้ไข และย้ายประกาศทุกบัญชีไปยังถังขยะ"}</p>
+              <h1>{adminSection === "trash" ? "ถังขยะ" : "ข้อมูลโครงการ"}</h1>
+              <p>{adminSection === "trash"
+                ? "กู้คืนประกาศได้ภายใน 15 วัน ก่อนลบออกจากระบบถาวร"
+                : "จัดการ แก้ไข และย้ายประกาศทุกบัญชีไปยังถังขยะ"}</p>
             </section>
             <div className="admin-dashboard-grid">
               <aside className="admin-sidebar" aria-label="หมวดหมู่แดชบอร์ด">
@@ -747,84 +679,12 @@ export default function ApartmentHome() {
                 <button className={adminSection === "trash" ? "active" : ""} onClick={() => setAdminSection("trash")}>
                   <span>ถังขยะ</span><strong>{trashedListings.length}</strong>
                 </button>
-                <button className={adminSection === "pending" ? "active" : ""} onClick={() => setAdminSection("pending")}>
-                  <span>รอตรวจสอบ</span><strong>{pendingReviews.length}</strong>
-                </button>
               </aside>
               <div className="admin-dashboard-content">
                 <section className="admin-summary" aria-label="สรุปประกาศ">
-                  <div><span>รอตรวจสอบ</span><strong>{pendingReviews.length}</strong></div>
                   <div><span>ประกาศที่ใช้งาน</span><strong>{visibleAdminListings.length}</strong></div>
                   <div><span>ในถังขยะ</span><strong>{trashedListings.length}</strong></div>
                 </section>
-                {adminSection === "pending" && reviewError && <p className="form-error" role="alert">{reviewError}</p>}
-                {adminSection === "pending" && reviewLoading ? (
-              <p className="empty" role="status">กำลังโหลดคิวตรวจสอบ...</p>
-            ) : adminSection === "pending" && !reviewError && pendingReviews.length === 0 ? (
-              <section className="admin-empty">
-                <span aria-hidden="true">✓</span>
-                <h2>ไม่มีประกาศค้างตรวจ</h2>
-                <p>เมื่อมีผู้ส่งประกาศเข้ามา รายการจะแสดงในหน้านี้</p>
-              </section>
-            ) : adminSection === "pending" && !reviewError ? (
-              <section className="admin-manage-all" aria-label="รายการรอตรวจสอบ">
-                <div className="admin-manage-heading">
-                  <span className="status-badge">{pendingReviews.length} รายการ</span>
-                </div>
-                <div className="admin-listings-table-wrap">
-                  <table className="admin-listings-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">รหัส</th>
-                        <th scope="col">ชื่อโครงการ</th>
-                        <th scope="col">ราคา</th>
-                        <th scope="col">สถานะ</th>
-                        <th scope="col">จัดการ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pendingReviews.map((listing) => {
-                        const details = listing.details || {};
-                        return (
-                          <tr key={listing.id}>
-                            <td><span className="admin-project-code">{formatListingCode(listing.id, listingCodePrefix)}</span></td>
-                            <th scope="row">
-                              <div className="admin-table-listing">
-                                {details.images?.[0] ? (
-                                  <img src={details.images[0]} alt="" />
-                                ) : (
-                                  <div className="admin-table-placeholder">ไม่มีรูป</div>
-                                )}
-                                <div className="admin-table-details">
-                                  <button
-                                    className="admin-table-name-button"
-                                    type="button"
-                                    aria-haspopup="dialog"
-                                    onClick={() => setPendingReviewListing(listing)}
-                                  >{listing.name}</button>
-                                  <div className="admin-table-timestamp">ผู้โพสต์: {listing.owner_email || "บัญชีผู้ใช้เดิม"}</div>
-                                </div>
-                              </div>
-                            </th>
-                            <td>{formatNumber(listing.price, language)} บาท{details.listingType === "sale" ? "" : "/เดือน"}</td>
-                            <td><span className="status-badge status-pending_review">รอตรวจสอบ</span></td>
-                            <td>
-                              <button
-                                className="secondary-button"
-                                disabled={approvingListingId === listing.id}
-                                onClick={() => approveListing(listing.id)}
-                              >
-                                {approvingListingId === listing.id ? "กำลังดำเนินการ..." : "ตรวจสอบแล้ว · ยืนยันเผยแพร่"}
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            ) : null}
             {adminSection === "all" && <section className="admin-manage-all" aria-label="ข้อมูลโครงการ">
               <div className="admin-manage-heading">
                 <div className="admin-manage-heading-actions">
@@ -1107,16 +967,6 @@ export default function ApartmentHome() {
             onClose={() => setSelectedListing(null)}
           />
         )}
-        {pendingReviewListing && (
-          <AdminReviewModal
-            listing={pendingReviewListing}
-            onClose={() => setPendingReviewListing(null)}
-            onApprove={() => approveListing(pendingReviewListing.id)}
-            approving={approvingListingId === pendingReviewListing.id}
-            language={language}
-            listingCode={formatListingCode(pendingReviewListing.id, listingCodePrefix)}
-          />
-        )}
       </div>
       </Localized>
     );
@@ -1252,9 +1102,9 @@ export default function ApartmentHome() {
               <span className="eyebrow">ลงประกาศอสังหาริมทรัพย์</span>
               <h1>{listingId ? "แก้ไขประกาศของคุณ" : "สร้างประกาศใหม่"}</h1>
               <p>
-                {listingEditStatus === "published" || listingEditStatus === "closed"
-                  ? "เมื่อส่งข้อมูลแก้ไข ประกาศจะกลับไปรอตรวจสอบและจะเผยแพร่อีกครั้งหลังผู้ดูแลอนุมัติ"
-                  : "กรอกข้อมูลทีละขั้นตอน บันทึกเป็นฉบับร่างไว้ทำต่อภายหลังได้"}
+                {listingId
+                  ? "แก้ไขข้อมูลแล้วกดบันทึกเพื่ออัปเดตประกาศในข้อมูลโครงการทันที"
+                  : "กรอกข้อมูลทีละขั้นตอน บันทึกเป็นฉบับร่างไว้ทำต่อภายหลังได้ เมื่อยืนยันประกาศจะแสดงในข้อมูลโครงการทันที"}
               </p>
               <ol className="listing-stepper" aria-label="ขั้นตอนการลงประกาศ">
                 {LISTING_STEPS.map((step, index) => (
@@ -1427,7 +1277,7 @@ export default function ApartmentHome() {
                     <div className="listing-photos">
                       {listingForm.images.map((image, index) => <img src={image} alt={`รูปทรัพย์ ${index + 1}`} key={`${index}-${image.slice(0, 30)}`} />)}
                     </div>
-                    <p className="review-note">เมื่อยืนยัน ประกาศจะมีสถานะ “รอตรวจสอบ” และจะแสดงต่อสาธารณะหลังได้รับการอนุมัติ</p>
+                    <p className="review-note">เมื่อยืนยัน ประกาศจะเผยแพร่ทันทีและแสดงในข้อมูลโครงการ</p>
                   </section>
                 )}
 
@@ -1445,7 +1295,7 @@ export default function ApartmentHome() {
                     }}>ถัดไป</button>
                   ) : (
                     <button className="btn" type="submit" disabled={listingLoading}>
-                      {listingLoading ? "กำลังส่ง..." : listingEditStatus === "published" || listingEditStatus === "closed" ? "ยืนยันส่งแก้ไขตรวจสอบ" : "ยืนยันส่งตรวจสอบ"}
+                      {listingLoading ? "กำลังส่ง..." : listingId ? "บันทึกการแก้ไข" : "ยืนยันลงโครงการ"}
                     </button>
                   )}
                   {listingEditStatus !== "published" && listingEditStatus !== "closed" && (

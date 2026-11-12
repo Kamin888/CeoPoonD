@@ -99,10 +99,8 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .status-badge{width:max-content;padding:2px 9px;border-radius:999px;background:var(--hero);font-size:12px;font-weight:700}
 .ah .status-published{background:#d7f4e3;color:#176b3a}
 .ah .status-closed{background:#eee;color:#555}
-.ah .status-pending_review{background:#fff0d4;color:#805500}
 .ah .status-draft{background:var(--line);color:var(--muted)}
 .ah .my-listing-actions{display:flex;gap:8px;flex-wrap:wrap}
-.ah .admin-review-list{display:grid;gap:14px}
 .ah .admin-dashboard{max-width:1180px}
 .ah .admin-dashboard main{padding-bottom:48px}
 .ah .admin-dashboard .logo small{font-size:11px;color:var(--muted);letter-spacing:1px}
@@ -119,7 +117,7 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-sidebar button strong{min-width:24px;padding:1px 6px;border-radius:999px;background:var(--line);font-size:12px;text-align:center}
 .ah .admin-sidebar button.active strong{background:var(--accent);color:var(--accent-ink)}
 .ah .admin-dashboard-content{min-width:0}
-.ah .admin-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 22px}
+.ah .admin-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 22px}
 .ah .admin-summary>div{display:grid;gap:4px;padding:18px 20px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
 .ah .admin-summary span{font-size:14px;color:var(--muted)}
 .ah .admin-summary strong{font-size:28px;line-height:1.3}
@@ -128,19 +126,6 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-empty>span{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#d7f4e3;color:#176b3a;font-size:24px}
 .ah .admin-empty h2{margin:10px 0 4px}
 .ah .admin-empty p{margin:0;color:var(--muted)}
-.ah .admin-review-card{overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:12px}
-.ah .admin-review-topline{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 18px;background:var(--hero);color:var(--muted);font-size:13px}
-.ah .admin-review-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;padding:14px 18px 0}
-.ah .admin-review-gallery img{width:100%;height:190px;object-fit:cover;border-radius:8px;background:var(--bg)}
-.ah .admin-review-body{padding:14px 18px 18px}
-.ah .admin-review-main h2{margin:4px 0;font-size:24px}
-.ah .admin-review-main>p{margin:4px 0;color:var(--muted);overflow-wrap:anywhere}
-.ah .admin-review-main .admin-review-price{font-size:19px;font-weight:800;color:var(--accent)}
-.ah .admin-detail-grid{display:grid;grid-template-columns:minmax(160px,.65fr) minmax(0,2fr);gap:9px 16px;margin:18px 0}
-.ah .admin-detail-grid dt{font-weight:700}
-.ah .admin-detail-grid dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted)}
-.ah .admin-review-actions{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-top:14px;border-top:1px solid var(--line)}
-.ah .admin-review-actions>span{font-size:13px;color:var(--muted)}
 .ah .admin-manage-all{margin-top:42px}
 .ah .admin-manage-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:14px}
 .ah .admin-manage-heading h2{margin:0}
@@ -177,22 +162,6 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-table-name-button{display:block;max-width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;font-weight:700;line-height:inherit;text-align:left;overflow-wrap:anywhere;cursor:pointer}
 .ah .admin-table-name-button:hover,.ah .admin-table-name-button:focus-visible{color:var(--accent);text-decoration:underline}
 .ah .admin-table-timestamp{color:var(--muted);font-size:11px;line-height:1.5}
-.ah .admin-review-modal-backdrop{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;padding:24px;background:#06131ecc;backdrop-filter:blur(5px)}
-.ah .admin-review-modal{position:relative;width:min(900px,100%);max-height:min(90vh,900px);overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 24px 80px #0005}
-.ah .admin-review-modal-content{padding:28px}
-.ah .admin-review-modal-close{position:absolute;z-index:1;top:12px;right:12px;width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--ink);font-size:26px;line-height:1;cursor:pointer}
-.ah .admin-review-modal-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding-right:42px}
-.ah .admin-review-modal-heading h2{margin:8px 0 3px}
-.ah .admin-review-modal-heading p{margin:0;color:var(--muted)}
-.ah .admin-review-modal-heading>strong{flex:0 0 auto;color:var(--accent);font-size:19px}
-.ah .admin-review-modal-images{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
-.ah .admin-review-modal-images img{width:160px;height:120px;border-radius:8px;object-fit:cover}
-.ah .admin-review-modal-images p{color:var(--muted)}
-.ah .admin-review-modal-details{display:grid;grid-template-columns:minmax(160px,.65fr) minmax(0,2fr);gap:8px 14px;margin:18px 0}
-.ah .admin-review-modal-details dt{font-weight:700}
-.ah .admin-review-modal-details dd{margin:0;color:var(--muted);overflow-wrap:anywhere;white-space:pre-wrap}
-.ah .admin-review-modal-actions{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-top:16px;border-top:1px solid var(--line)}
-.ah .admin-review-modal-actions>span{color:var(--muted);font-size:13px}
 .ah .admin-listings-table .admin-manage-actions{gap:4px;flex-wrap:nowrap}
 .ah .admin-listings-table .secondary-button,.ah .admin-listings-table .danger-button{padding:5px 6px;font-size:12px;white-space:nowrap}
 .ah .admin-listings-table .admin-manage-actions .admin-icon-button{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:0}
@@ -265,23 +234,6 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
   .ah .admin-sidebar{position:static;display:flex;gap:4px;padding:6px;overflow-x:auto}
   .ah .admin-sidebar-label{display:none}
   .ah .admin-sidebar button{flex:1 0 auto;justify-content:center;width:auto;padding:9px 10px;white-space:nowrap}
-  .ah .admin-review-gallery{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));padding-left:12px;padding-right:12px}
-  .ah .admin-review-gallery img{height:130px}
-  .ah .admin-review-topline{align-items:flex-start;flex-direction:column}
-  .ah .admin-detail-grid{grid-template-columns:1fr;gap:2px}
-  .ah .admin-detail-grid dd{margin-bottom:8px}
-  .ah .admin-review-actions{align-items:stretch;flex-direction:column}
-  .ah .admin-review-actions .btn{width:100%}
-  .ah .admin-review-modal-backdrop{align-items:end;padding:0}
-  .ah .admin-review-modal{width:100%;max-height:94dvh;border-radius:16px 16px 0 0}
-  .ah .admin-review-modal-content{padding:22px 18px}
-  .ah .admin-review-modal-heading{flex-direction:column}
-  .ah .admin-review-modal-heading>strong{font-size:17px}
-  .ah .admin-review-modal-images img{width:calc(50% - 4px);height:120px}
-  .ah .admin-review-modal-details{grid-template-columns:1fr;gap:2px}
-  .ah .admin-review-modal-details dd{margin-bottom:8px}
-  .ah .admin-review-modal-actions{align-items:stretch;flex-direction:column}
-  .ah .admin-review-modal-actions .btn{width:100%}
   .ah .admin-manage-item{grid-template-columns:64px minmax(0,1fr)}
   .ah .admin-manage-item>img,.ah .admin-manage-placeholder{width:64px;height:64px}
   .ah .admin-manage-actions{grid-column:1/-1}

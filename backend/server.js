@@ -85,8 +85,7 @@ async function initializeDatabase() {
   `);
   await pool.query(`
     ALTER TABLE listings
-    ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'published'
-      CHECK (status IN ('draft', 'pending_review', 'published', 'closed')),
+    ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'published',
     ADD COLUMN IF NOT EXISTS room_status TEXT NOT NULL DEFAULT 'vacant'
       CHECK (room_status IN ('vacant', 'occupied')),
     ADD COLUMN IF NOT EXISTS details JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -103,6 +102,31 @@ async function initializeDatabase() {
     ALTER COLUMN updated_at SET DEFAULT NOW(),
     ALTER COLUMN updated_at SET NOT NULL
   `);
+  const { rows: statusConstraints } = await pool.query(
+    `SELECT pg_get_constraintdef(oid) AS definition
+     FROM pg_constraint
+     WHERE conrelid = 'listings'::regclass AND conname = 'listings_status_check'`
+  );
+  if (!statusConstraints[0] || statusConstraints[0].definition.includes("pending_review")) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        "UPDATE listings SET status = 'published', updated_at = NOW() WHERE status = 'pending_review'"
+      );
+      await client.query("ALTER TABLE listings DROP CONSTRAINT IF EXISTS listings_status_check");
+      await client.query(
+        `ALTER TABLE listings
+         ADD CONSTRAINT listings_status_check CHECK (status IN ('draft', 'published', 'closed'))`
+      );
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
   await pool.query(`
     CREATE TABLE IF NOT EXISTS app_settings (
       key TEXT PRIMARY KEY,
@@ -294,9 +318,8 @@ function validateListingInput(body) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return { error: "ข้อมูลประกาศไม่ถูกต้อง" };
   }
-  const isNewForm = Object.hasOwn(body, "status");
   const status = body.status ?? "published";
-  if (!["draft", "pending_review", "published"].includes(status) || (isNewForm && status === "published")) {
+  if (!["draft", "published"].includes(status)) {
     return { error: "สถานะประกาศไม่ถูกต้อง" };
   }
 
@@ -329,7 +352,7 @@ function validateListingInput(body) {
   if (tenantContractEndDate && !validTenantContractEndDate) {
     return { error: "วันหมดสัญญาเช่าไม่ถูกต้อง" };
   }
-  if (status === "pending_review" && roomStatus === "occupied" && !validTenantContractEndDate) {
+  if (status === "published" && roomStatus === "occupied" && !validTenantContractEndDate) {
     return { error: "กรุณาระบุวันหมดสัญญาเช่าของผู้เช่า" };
   }
 
@@ -353,7 +376,7 @@ function validateListingInput(body) {
   }
   if (totalImageBytes > 6 * 1024 * 1024) return { error: "รูปภาพรวมกันต้องมีขนาดไม่เกิน 6 MB" };
 
-  if (status === "pending_review") {
+  if (status === "published") {
     if (!["rent", "sale"].includes(body.listingType)) return { error: "กรุณาเลือกประเภทประกาศให้ถูกต้อง" };
     if (!["condo", "apartment", "house", "townhome", "land", "other"].includes(body.propertyType)) {
       return { error: "กรุณาเลือกประเภททรัพย์ให้ถูกต้อง" };
@@ -410,11 +433,11 @@ async function saveListing(request, response, next, update = false) {
         `UPDATE listings
          SET name = $1, area = $2, price = $3, available = $4, transit = $5, pets = $6,
              room_status = COALESCE($7, room_status), status = $8, details = $9,
-             updated_at = NOW(), reviewed_by = NULL, reviewed_at = NULL
+             updated_at = NOW()
          WHERE id = $10 AND owner_id = $11 AND deleted_at IS NULL
            AND (
-             (status = 'draft' AND $8 IN ('draft', 'pending_review'))
-             OR (status IN ('published', 'closed') AND $8 = 'pending_review')
+             (status = 'draft' AND $8 IN ('draft', 'published'))
+             OR (status IN ('published', 'closed') AND $8 = 'published')
            )
          RETURNING id, name, area, price, available, transit, pets, room_status, status, details`,
         [name, area, price, available, transit, pets, roomStatus ?? null, status, details, request.params.id, request.userId]
@@ -519,7 +542,7 @@ app.put("/api/admin/listings/:id", requireTrustedOrigin, requireAuth, requireAdm
       `UPDATE listings
        SET name = $1, area = $2, price = $3, available = $4, transit = $5, pets = $6,
            room_status = COALESCE($7, room_status), status = $8, details = $9,
-           updated_at = NOW(), reviewed_by = NULL, reviewed_at = NULL
+           updated_at = NOW()
        WHERE id = $10 AND deleted_at IS NULL
        RETURNING id, name, area, price, available, transit, pets, room_status, status, details`,
       [name, area, price, available, transit, pets, roomStatus ?? null, status, details, request.params.id]
@@ -605,48 +628,16 @@ app.get("/api/my-listings", requireAuth, async (request, response, next) => {
   }
 });
 
-app.get("/api/admin/listings/pending", requireAuth, requireAdmin, async (_request, response, next) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT listings.id, listings.name, listings.area, listings.price, listings.details,
-              listings.created_at, users.email AS owner_email
-       FROM listings
-       JOIN users ON users.id = listings.owner_id
-       WHERE listings.status = 'pending_review' AND listings.deleted_at IS NULL
-       ORDER BY listings.created_at ASC`
-    );
-    response.json({ data: rows });
-  } catch (error) {
-    next(error);
-  }
-});
-
-app.patch("/api/admin/listings/:id/approve", requireTrustedOrigin, requireAuth, requireAdmin, async (request, response, next) => {
-  try {
-    const { rows } = await pool.query(
-      `UPDATE listings
-       SET status = 'published', updated_at = NOW(), reviewed_by = $1, reviewed_at = NOW()
-       WHERE id = $2 AND status = 'pending_review' AND deleted_at IS NULL
-       RETURNING id, status, reviewed_by, reviewed_at`,
-      [request.userId, request.params.id]
-    );
-    if (!rows[0]) return response.status(404).json({ error: "ไม่พบประกาศที่รอตรวจสอบ หรือประกาศนี้ได้รับการตรวจแล้ว" });
-    response.json({ data: rows[0] });
-  } catch (error) {
-    next(error);
-  }
-});
-
 app.patch("/api/listings/:id/status", requireTrustedOrigin, requireAuth, async (request, response, next) => {
   try {
     const { status } = request.body ?? {};
-    if (!["closed", "pending_review"].includes(status)) {
+    if (!["closed", "published"].includes(status)) {
       return response.status(400).json({ error: "สถานะที่ขอเปลี่ยนไม่ถูกต้อง" });
     }
     const { rows } = await pool.query(
       `UPDATE listings SET status = $1, updated_at = NOW()
        WHERE id = $2 AND owner_id = $3 AND deleted_at IS NULL
-         AND ((status = 'published' AND $1 = 'closed') OR (status = 'closed' AND $1 = 'pending_review'))
+         AND ((status = 'published' AND $1 = 'closed') OR (status = 'closed' AND $1 = 'published'))
        RETURNING id, status`,
       [status, request.params.id, request.userId]
     );
