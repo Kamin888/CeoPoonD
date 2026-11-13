@@ -267,6 +267,8 @@ export default function ApartmentHome() {
   const visibleAdminListings = adminListings;
   const vacantListingsCount = visibleAdminListings.filter((listing) => (listing.room_status || "vacant") === "vacant").length;
   const occupiedListingsCount = visibleAdminListings.filter((listing) => listing.room_status === "occupied").length;
+  const saleListingsCount = visibleAdminListings.filter((listing) => listing.details?.listingType === "sale").length;
+  const rentListingsCount = visibleAdminListings.filter((listing) => listing.details?.listingType === "rent").length;
   const filteredAdminListings = visibleAdminListings.filter((listing) => {
     const matchesName = !normalizedAdminNameFilter ||
       listing.name.toLocaleLowerCase().includes(normalizedAdminNameFilter);
@@ -755,9 +757,10 @@ export default function ApartmentHome() {
               <div className="admin-dashboard-content">
                 <section className="admin-summary" aria-label="สรุปประกาศ">
                   <div><span>ประกาศที่ใช้งาน</span><strong>{visibleAdminListings.length}</strong></div>
-                  <div><span>ในถังขยะ</span><strong>{trashedListings.length}</strong></div>
                   <div><span>สถานะว่าง</span><strong>{vacantListingsCount}</strong></div>
                   <div><span>สถานะไม่ว่าง</span><strong>{occupiedListingsCount}</strong></div>
+                  <div><span>จำนวนขาย</span><strong>{saleListingsCount}</strong></div>
+                  <div><span>จำนวนเช่า</span><strong>{rentListingsCount}</strong></div>
                 </section>
             {adminSection === "all" && <section className="admin-manage-all" aria-label="ข้อมูลโครงการ">
               <div className="admin-manage-heading">

@@ -118,6 +118,8 @@ const ENGLISH = {
   "จัดการประกาศ": "Manage listings",
   "ประกาศที่ใช้งาน": "Active listings",
   "ในถังขยะ": "In trash",
+  "จำนวนขาย": "For sale",
+  "จำนวนเช่า": "For rent",
   "รายการ": "items",
   "การแบ่งหน้า": "Pagination",
   "หน้าก่อนหน้า": "Previous page",

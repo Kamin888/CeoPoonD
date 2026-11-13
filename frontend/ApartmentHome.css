@@ -117,7 +117,7 @@ width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"N
 .ah .admin-sidebar button strong{min-width:24px;padding:1px 6px;border-radius:999px;background:var(--line);font-size:12px;text-align:center}
 .ah .admin-sidebar button.active strong{background:var(--accent);color:var(--accent-ink)}
 .ah .admin-dashboard-content{min-width:0}
-.ah .admin-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 22px}
+.ah .admin-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:0 0 22px}
 .ah .admin-summary>div{display:grid;gap:4px;padding:18px 20px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
 .ah .admin-summary span{font-size:14px;color:var(--muted)}
 .ah .admin-summary strong{font-size:28px;line-height:1.3}
